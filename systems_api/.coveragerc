@@ -1,0 +1,3 @@
+[run]
+source = systems_api
+omit = systems_api/test*
