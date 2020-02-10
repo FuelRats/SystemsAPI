@@ -24,6 +24,7 @@ requires = [
     'requests',
     'zmq',
     'simplejson',
+    'pyramid_jsonapi',
 ]
 
 tests_require = [
@@ -43,9 +44,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
-    author='',
-    author_email='',
-    url='',
+    author='Absolver (Kenneth Aalberg)',
+    author_email='absolver@fuelrats.com',
+    url='https://github.com/Fuelrats/',
     keywords='web pyramid pylons',
     packages=find_packages(),
     include_package_data=True,
