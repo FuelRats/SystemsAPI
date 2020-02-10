@@ -2,13 +2,8 @@ from pyramid.view import (
     view_config,
     view_defaults
 )
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 from ..models import Landmark, System
-
-
-def object_as_dict(obj):
-    return {c.key: getattr(obj, c.key)
-            for c in inspect(obj).mapper.column_attrs}
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
