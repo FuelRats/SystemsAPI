@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 from .. import models
 
 
-def setup_models(dbsession, env):
+def setup_models(dbsession):
     """
     Add or update models / fixtures in the database.
 
@@ -91,13 +91,14 @@ def setup_models(dbsession, env):
     dbsession.add(lm)
     lm = models.landmark.Landmark(name="Sol", x=0, y=0, z=0)
     dbsession.add(lm)
-    settings = env['registry']['settings']
+    #settings = env['registry']['settings']
     filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'bodies']
-    if 'stardb_host' not in settings:
-        print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
-              "inject the data manually into the database.")
-        return
-    host = settings['stardb_host']
+    #if 'stardb_host' not in settings:
+    #    print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
+    #          "inject the data manually into the database.")
+    #    return
+    #host = settings['stardb_host']
+    host = "https://downloads.spansh.co.uk"
     neededfiles = []
     for file in filelist:
         if os.path.isfile(f'{file}.csv.bz2'):
@@ -145,7 +146,7 @@ def main(argv=sys.argv):
     try:
         with env['request'].tm:
             dbsession = env['request'].dbsession
-            setup_models(dbsession, env)
+            setup_models(dbsession)
     except OperationalError:
         print('''
 Pyramid is having a problem using your SQL database.  The problem
