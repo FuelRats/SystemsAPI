@@ -13,6 +13,12 @@ valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='search', renderer='json')
 def search(request):
+    """
+    Multi-purpose search endpoint, taking various search types.
+    :param request: The Pyramid request object
+    :return: A JSON response
+    """
+
     if 'type' in request.params:
         searchtype = request.params['type']
         if searchtype not in valid_searches:
@@ -74,8 +80,7 @@ def search(request):
         sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
     if not result:
         # We haven't gotten a ORM result yet, execute manual SQL.
-        dbsession = request.dbsession
-        result = dbsession.execute(sql)
+        result = request.dbsession.execute(sql)
     for row in result:
         candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id'],
                            'permit_required': True if row.id64 in perm_systems else False})

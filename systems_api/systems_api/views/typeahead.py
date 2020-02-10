@@ -13,6 +13,12 @@ import pyramid.httpexceptions as exc
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='typeahead', renderer='json')
 def search(request):
+    """
+    Type-ahead provider for forms and similar.
+    :param request: The Pyramid request object
+    :return: A JSON response
+    """
+
     if 'term' in request.params:
         name = request.params['term'].upper()
     else:
