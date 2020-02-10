@@ -18,6 +18,79 @@ def setup_models(dbsession, env):
     """
     model = models.mymodel.MyModel(name='one', value=1)
     dbsession.add(model)
+    permit_systems = [
+        10477373803,
+        10494151019,
+        301958431924,
+        1733052863178,
+        670954497449,
+        1006909786467,
+        633675420378,
+        663329196387,
+        358864622282,
+        7268561135001,
+        5068732442025,
+        3107710898898,
+        164098653,
+        972566792555,
+        1384883652971,
+        1109989017963,
+        3932277478106,
+        3107576615650,
+        44837112163,
+        670685799809,
+        121569805492,
+        670685996457,
+        9467047454129,
+        869470816603,
+        1350523947317,
+        633675453138,
+        633608278738,
+        869454039395,
+        251012319595,
+        938207070571,
+        2415675853163,
+        40553617967984,
+        1213084977515,
+        7268292568505,
+        2870246057401,
+        22962505665400,
+        5370319620984,
+        1733187048154,
+        5369245879160,
+        22961431923567,
+        2296141923568,
+        22961431923576,
+        22961431923568,
+        1350523947371,
+    ]
+    print("Adding permit systems...")
+    for permit in permit_systems:
+        psystem = models.permits.Permits(id64=permit)
+        dbsession.add(psystem)
+    print("Adding default landmarks...")
+    lm = models.landmark.Landmark(name="Beagle Point", x=-1111.56, y=-134.22, z=65269.75)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Boewnst KS-S c20-959", x=-6195.47, y=-140.28, z=16462.06)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Colonia", x=-9530.5, y=-910.28, z=19808.12)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Fuelum", x=52, y=-52.66, z=49.81)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Gru Hypue KS-T d3-31", x=-4990.84, y=-935.72, z=13387.16)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Maia", x=-81.78, y=-149.44, z=-343.38)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Rodentia", x=-9530.53, y=-907.25, z=19787.38)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Rohini", x=-3374.81, y=-47.81, z=6912.25)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Sagittarius A*", x=25.22, y=-20.91, z=25899.97)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Skaudi CH-B d14-34", x=-5481.84, y=-579.16, z=10429.94)
+    dbsession.add(lm)
+    lm = models.landmark.Landmark(name="Sol", x=0, y=0, z=0)
+    dbsession.add(lm)
     settings = env['registry']['settings']
     filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'bodies']
     if 'stardb_host' not in settings:

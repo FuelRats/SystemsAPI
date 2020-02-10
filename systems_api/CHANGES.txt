@@ -1,4 +1,19 @@
-0.0
+1.0a
 ---
 
-- Initial version.
+This is a reimplementation of the original EDSM/EDDB JSONAPI, due to certain problems with
+  outdated scaffolds used in PyCharm leaving cruft in the inner workings, and the original
+  EDDB/EDSM implementations leaving much to be desired.
+
+Most functionality remains the same, as do the returns, though some things are worth noting:
+
+- Levenshtein search is no longer available. The search type is still supported, but uses built-
+  in Postgres similarity search, not Levenshtein. Distance returned is a similarity float.
+- InitializeDB no longer loads data to Postgres. ODO is no longer maintained and does not work
+  properly with newer versions of Python (psycopg2 in particular). InitializeDB downloads the
+  required CSV files and prepares them for injection using psql COPY.
+- Relations are once more available on the JSONAPI endpoints.
+- All objects are now keyed to id64. Previous implementations used EDSM or EDDB's IDs, which
+  were not consistent. This version relies solely on id64.
+- An EDDN client now keeps the systems and stars up to date, making the need to pull down complete
+  dumps of the DB more of a one-time affair.
