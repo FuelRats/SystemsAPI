@@ -123,7 +123,7 @@ def setup_models(dbsession, env):
         with open(f'{file}.csv', 'wb') as outfile, open(f'{file}.csv.bz2', 'rb') as infile:
             print("Decompressiong {file}.csv.bz2...")
             decompressor = BZ2Decompressor()
-            for data in iter(lambda : infile.read(100*1024), b''):
+            for data in iter(lambda: infile.read(100*1024), b''):
                 outfile.write(decompressor.decompress(data))
     print("Complete!")
 
