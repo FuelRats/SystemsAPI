@@ -11,6 +11,8 @@ from .body import Body
 from .populatedsystem import PopulatedSystem
 from .station import Station
 from .system import System
+from .permits import Permits
+from .landmark import Landmark
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup
