@@ -1,0 +1,82 @@
+from pyramid.view import (
+    view_config,
+    view_defaults
+)
+
+from sqlalchemy import text, func
+from ..models import System, PopulatedSystem, Permits
+import pyramid.httpexceptions as exc
+
+valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
+
+
+@view_defaults(renderer='../templates/mytemplate.jinja2')
+@view_config(route_name='search', renderer='json')
+def search(request):
+    if 'type' in request.params:
+        searchtype = request.params['type']
+        if searchtype not in valid_searches:
+            return exc.HTTPBadRequest(detail=f"Invalid search type '{searchtype}'.")
+    else:
+        searchtype = 'lev'
+    if 'term' in request.params:
+        xhr = True
+        name = request.params['term'].upper()
+        searchtype = "lev"
+    else:
+        xhr = False
+        if 'name' not in request.params:
+            return exc.HTTPBadRequest(detail="No name in search request.")
+        name = request.params['name']
+    if 'limit' not in request.params:
+        limit = 20
+    else:
+        if request.params['limit'] > 200:
+            return exc.HTTPBadRequest(detail="Limit too high (Over 200)")
+        limit = request.params['limit']
+    if len(name) < 3:
+        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+    permsystems = request.dbsession.query(Permits)
+    perm_systems = []
+    candidates = []
+    result = None
+    for system in permsystems:
+        perm_systems.append(system.id64)
+    # Ensure we're not wasting cycles on someone searching an exact system name on this endpoint.
+    # func.similarity(System.name, name).label('similarity'))
+    match = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
+        filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc()).limit(1)
+    for candidate in match:
+        candidates.append({'name': candidate.name, 'similarity': 1,
+                           'permit_required': True if candidate.id64 in perm_systems else False})
+    if match.count > 0:
+        return {'meta': {'name': candidates[0].name, 'type': 'Perfect match'}, 'data': candidates}
+
+    if searchtype == 'lev':
+        result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
+            filter(System.name.ilike(f"{name}%")).order_by(func.similarity(System.name, name).desc()).limit(limit)
+    if searchtype == 'soundex':
+        sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
+                   f"WHERE soundex(name) = soundex('{name}') ORDER BY "
+                   f"similarity(name, '{name}') DESC LIMIT {limit}")
+    if searchtype == 'meta':
+        if 'sensitivity' not in request.params:
+            sensitivity = 5
+        else:
+            sensitivity = request.params['sensitivity']
+        sql = text(f"SELECT *, similarity(name,  {name}) AS similarity FROM systems "
+                   f"WHERE metaphone(name, '{str(sensitivity)}') = metaphone('{name}', "
+                   f"'{str(sensitivity)}') ORDER BY similarity DESC LIMIT {str(limit)}")
+    if searchtype == 'dmeta':
+        sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
+                   f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
+    if searchtype == "fulltext":
+        sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
+    if not result:
+        # We haven't gotten a ORM result yet, execute manual SQL.
+        dbsession = request.dbsession
+        result = dbsession.execute(sql)
+    for row in result:
+        candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id'],
+                           'permit_required': True if row.id64 in perm_systems else False})
+    return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
