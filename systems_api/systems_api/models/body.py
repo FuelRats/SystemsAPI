@@ -6,22 +6,22 @@ from sqlalchemy import (
     Boolean,
     Float,
     Integer,
-    ForeignKey,
-    JSON)
+    ForeignKey
+)
 
 from .meta import Base
-
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Body(Base):
     __tablename__ = 'bodies'
     id64 = Column(BigInteger, primary_key=True)
     bodyId = Column(Integer)
     name = Column(Text)
-    discovery = Column(JSON)
+    discovery = Column(JSONB)
     type = Column(Text)
     subType = Column(Text)
     offset = Column(Integer)
-    parents = Column(JSON)
+    parents = Column(JSONB)
     distanceToArrival = Column(Float)
     isLandable = Column(Boolean)
     gravity = Column(Float)
@@ -31,7 +31,7 @@ class Body(Base):
     surfacePressure = Column(Float)
     volcanismType = Column(Text)
     atmosphereType = Column(Text)
-    atmosphereComposition = Column(JSON)
+    atmosphereComposition = Column(JSONB)
     terraformingState = Column(Text)
     orbitalPeriod = Column(Float)
     semiMajorAxis = Column(Float)
@@ -41,8 +41,8 @@ class Body(Base):
     rotationalPeriod = Column(Float)
     rotationalPeriodTidallyLocked = Column(Boolean)
     axialTilt = Column(Float)
-    rings = Column(JSON)
-    materials = Column(JSON)
+    rings = Column(JSONB)
+    materials = Column(JSONB)
     updateTime = Column(DateTime)
     updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId64 = Column(BigInteger, ForeignKey('systems.id64'))
