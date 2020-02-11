@@ -116,14 +116,14 @@ def setup_models(dbsession, env):
             url = urljoin(host, f"{file}.csv.bz2")
             print(f"Downloading {url}...")
             r = requests.get(url, stream=True)
-        with open(f'{file}.csv.bz2', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
+            with open(f'{file}.csv.bz2', 'wb') as f:
+                for chunk in r.iter_content(chunk_size=4096):
+                    if chunk:
+                        f.write(chunk)
     print("Decompressing files...")
     for file in neededfiles:
         with open(f'{file}.csv', 'wb') as outfile, open(f'{file}.csv.bz2', 'rb') as infile:
-            print("Decompressiong {file}.csv.bz2...")
+            print("Decompressing {file}.csv.bz2...")
             decompressor = BZ2Decompressor()
             for data in iter(lambda: infile.read(100*1024), b''):
                 outfile.write(decompressor.decompress(data))
