@@ -147,7 +147,7 @@ def main(argv=sys.argv):
     try:
         with env['request'].tm:
             dbsession = env['request'].dbsession
-            setup_models(dbsession, env)
+            setup_models(dbsession, bootstrap(args.config_uri))
     except OperationalError:
         print('''
 Pyramid is having a problem using your SQL database.  The problem
