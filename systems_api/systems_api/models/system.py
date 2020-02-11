@@ -22,8 +22,8 @@ class System(Base):
 
 
 Index('system_idx_id64', System.id64, unique=True)
-Index('system_idx_name_gin', System.name, [text('name gin_trgm_ops')], postgresql_using='gin',
-      postgresql_ops={'data': 'gin_trgm_ops', 'description': 'gin_trgm_ops'})
+Index('system_idx_name_gin', System.name, postgresql_using='gin',
+      postgresql_ops={'name': 'gin_trgm_ops'})
 Index('system_idx_name_btree', System.name, postgresql_using='btree')
 Index('system_idx_name_soundex', System.name, func.soundex(System.name))
 Index('system_idx_name_dmetaphone', System.name, func.dmetaphone(System.name))
