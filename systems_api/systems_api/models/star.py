@@ -6,7 +6,8 @@ from sqlalchemy import (
     Boolean,
     Float,
     Integer,
-    ForeignKey
+    ForeignKey,
+    Index
 )
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -49,3 +50,7 @@ class Star(Base):
     updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId64 = Column(BigInteger, ForeignKey('systems.id64'))
     systemName = Column(Text)
+
+
+Index('star_idx_id64', Star.id64, unique=True)
+Index('star_idx_systemid64', Star.systemId64)

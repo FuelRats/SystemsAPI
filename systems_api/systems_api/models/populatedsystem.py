@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column,
     BigInteger,
     Text,
-    DateTime
+    DateTime,
+    Index
 )
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -18,3 +19,7 @@ class PopulatedSystem(Base):
     controllingFaction = Column(JSONB, doc="Controlling faction, in a JSON blob")
     date = Column(DateTime, doc="DateTime of last update to this system")
     date.info.update({'pyramid_jsonapi': {'visible': False}})
+
+
+Index('psystem_idx_id64', PopulatedSystem.id64, unique=True)
+Index('psystem_idx_systemid64', PopulatedSystem.name)

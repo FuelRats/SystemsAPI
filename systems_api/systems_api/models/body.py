@@ -6,11 +6,13 @@ from sqlalchemy import (
     Boolean,
     Float,
     Integer,
-    ForeignKey
+    ForeignKey,
+    Index
 )
 
 from .meta import Base
 from sqlalchemy.dialects.postgresql import JSONB
+
 
 class Body(Base):
     __tablename__ = 'bodies'
@@ -47,3 +49,7 @@ class Body(Base):
     updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId64 = Column(BigInteger, ForeignKey('systems.id64'))
     systemName = Column(Text)
+
+
+Index('body_idx_id64', Body.id64, unique=True)
+Index('body_idx_systemid64', Body.systemId64)
