@@ -91,7 +91,7 @@ def setup_models(dbsession, env):
     dbsession.add(lm)
     lm = models.landmark.Landmark(name="Sol", x=0, y=0, z=0)
     dbsession.add(lm)
-    settings = env['registry']['settings']
+    settings = env['request'].registry.settings
     filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'bodies']
     if 'stardb_host' not in settings:
         print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
@@ -113,8 +113,8 @@ def setup_models(dbsession, env):
             neededfiles.append(file)
     if neededfiles:
         for file in neededfiles:
-            print(f"Downloading {file}.csv from Spansh...")
             url = urljoin(host, f"{file}.csv.bz2")
+            print(f"Downloading {url}...")
             r = requests.get(url, stream=True)
         with open(f'{file}.csv.bz2', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
