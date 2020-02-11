@@ -26,7 +26,7 @@ Index('system_idx_name_gin', System.name, postgresql_using='gin',
 Index('system_idx_name_btree', System.name, postgresql_using='btree')
 Index('system_idx_name_soundex', System.name, postgresql_using='soundex')
 Index('system_idx_name_dmetaphone', System.name, postgresql_using='dmetaphone')
-Index('system_idx_coords', System.coords['x'].cast(Float))
-Index('system_idx_coords', System.coords['y'].cast(Float))
-Index('system_idx_coords', System.coords['z'].cast(Float))
+Index('system_idx_coords_x', System.coords['x'].cast(Float))
+Index('system_idx_coords_y', System.coords['y'].cast(Float))
+Index('system_idx_coords_z', System.coords['z'].cast(Float))
 
