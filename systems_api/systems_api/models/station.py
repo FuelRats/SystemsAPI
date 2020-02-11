@@ -5,8 +5,9 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     Float,
-    JSON,
     ForeignKey)
+
+from sqlalchemy.dialects.postgresql import JSONB
 
 from .meta import Base
 
@@ -24,7 +25,7 @@ class Station(Base):
     haveMarket = Column(Boolean)
     haveShipyard = Column(Boolean)
     haveOutfitting = Column(Boolean)
-    otherServices = Column(JSON)
+    otherServices = Column(JSONB)
     updateTime = Column(DateTime)
     updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId64 = Column(BigInteger, ForeignKey('systems.id64'))
