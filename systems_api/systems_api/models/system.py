@@ -8,7 +8,6 @@ from sqlalchemy import (
     func)
 
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import text
 from .meta import Base
 
 
@@ -25,8 +24,8 @@ Index('system_idx_id64', System.id64, unique=True)
 Index('system_idx_name_gin', System.name, postgresql_using='gin',
       postgresql_ops={'name': 'gin_trgm_ops'})
 Index('system_idx_name_btree', System.name, postgresql_using='btree')
-Index('system_idx_name_soundex', System.name, func.soundex(System.name))
-Index('system_idx_name_dmetaphone', System.name, func.dmetaphone(System.name))
+Index('system_idx_name_soundex', System.name, postgresql_using='soundex')
+Index('system_idx_name_dmetaphone', System.name, postgresql_using='dmetaphone')
 Index('system_idx_coords', System.coords['x'].cast(Float))
 Index('system_idx_coords', System.coords['y'].cast(Float))
 Index('system_idx_coords', System.coords['z'].cast(Float))
