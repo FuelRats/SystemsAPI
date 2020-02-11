@@ -3,7 +3,7 @@ import os
 import sys
 from bz2 import BZ2Decompressor
 from datetime import datetime, timedelta
-
+from urllib.parse import urljoin
 import requests
 from pyramid.paster import bootstrap, setup_logging
 from sqlalchemy.exc import OperationalError
@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 from .. import models
 
 
-def setup_models(dbsession):
+def setup_models(dbsession, env):
     """
     Add or update models / fixtures in the database.
 
@@ -91,14 +91,14 @@ def setup_models(dbsession):
     dbsession.add(lm)
     lm = models.landmark.Landmark(name="Sol", x=0, y=0, z=0)
     dbsession.add(lm)
-    #settings = env['registry']['settings']
+    settings = env['registry']['settings']
     filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'bodies']
-    #if 'stardb_host' not in settings:
-    #    print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
-    #          "inject the data manually into the database.")
-    #    return
-    #host = settings['stardb_host']
-    host = "https://downloads.spansh.co.uk"
+    if 'stardb_host' not in settings:
+        print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
+              "download and inject the data manually into the database.")
+        return
+    host = settings['stardb_host']
+    #host = "https://downloads.spansh.co.uk"
     neededfiles = []
     for file in filelist:
         if os.path.isfile(f'{file}.csv.bz2'):
@@ -114,8 +114,9 @@ def setup_models(dbsession):
     if neededfiles:
         for file in neededfiles:
             print(f"Downloading {file}.csv from Spansh...")
-            r = requests.get(f"{host}/{file}.csv.bz2", stream=True)
-        with open('{file}.csv.bz2', 'wb') as f:
+            url = urljoin(host, f"{file}.csv.bz2")
+            r = requests.get(url, stream=True)
+        with open(f'{file}.csv.bz2', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
@@ -146,7 +147,7 @@ def main(argv=sys.argv):
     try:
         with env['request'].tm:
             dbsession = env['request'].dbsession
-            setup_models(dbsession)
+            setup_models(dbsession, env)
     except OperationalError:
         print('''
 Pyramid is having a problem using your SQL database.  The problem
