@@ -115,11 +115,11 @@ def setup_models(dbsession, env):
     if neededfiles:
         for file in neededfiles:
             url = urljoin(host, f"{file}.csv.bz2")
-            print(f"Downloading {url}...")
+            print(f"\nDownloading {url}...")
             wget.download(url, f"{file}.csv.bz2")
     for file in neededfiles:
         with open(f'{file}.csv', 'wb') as outfile, open(f'{file}.csv.bz2', 'rb') as infile:
-            print(f"Decompressing {file}.csv.bz2...")
+            print(f"\nDecompressing {file}.csv.bz2...")
             decompressor = BZ2Decompressor()
             for data in iter(lambda: infile.read(100*1024), b''):
                 outfile.write(decompressor.decompress(data))
