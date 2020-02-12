@@ -5,6 +5,7 @@ from bz2 import BZ2Decompressor
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
 import requests
+import wget as wget
 from pyramid.paster import bootstrap, setup_logging
 from sqlalchemy.exc import OperationalError
 
@@ -115,12 +116,7 @@ def setup_models(dbsession, env):
         for file in neededfiles:
             url = urljoin(host, f"{file}.csv.bz2")
             print(f"Downloading {url}...")
-            r = requests.get(url, stream=True)
-            with open(f'{file}.csv.bz2', 'wb') as f:
-                for chunk in r.iter_content(chunk_size=4096):
-                    if chunk:
-                        f.write(chunk)
-    print("Decompressing files...")
+            wget.download(url, f"{file}.csv.bz2")
     for file in neededfiles:
         with open(f'{file}.csv', 'wb') as outfile, open(f'{file}.csv.bz2', 'rb') as infile:
             print(f"Decompressing {file}.csv.bz2...")
@@ -128,6 +124,8 @@ def setup_models(dbsession, env):
             for data in iter(lambda: infile.read(100*1024), b''):
                 outfile.write(decompressor.decompress(data))
     print("Complete!")
+    print("You now need to inject these CSV files into your postgres database using the following command:")
+    print("COPY <table> from <csvfile.csv> WITH CSV HEADER QUOTE AS '\"' ESCAPE AS '\\' DELIMITER E',';")
 
 
 def parse_args(argv):

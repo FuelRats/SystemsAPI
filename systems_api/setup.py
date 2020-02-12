@@ -25,6 +25,7 @@ requires = [
     'zmq',
     'simplejson',
     'pyramid_jsonapi',
+    'wget',
 ]
 
 tests_require = [
