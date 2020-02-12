@@ -20,20 +20,25 @@ Installing
 
     env/bin/pip install -e ".[testing]"
 
+- Copy development.ini or production.ini to a different filename and configure according to your
+  setup.
+
+    cp development.ini run.ini
+
 - Initialize and upgrade the database using Alembic.
 
-        env/bin/alembic -c development.ini upgrade unindexed
+        env/bin/alembic -c <yourfile.ini> upgrade unindexed
 
 - Download and initialize the database
 
-    env/bin/initialize_systems_api_db development.ini
+    env/bin/initialize_systems_api_db <yourfile.ini>
 
 - Inject the downloaded CSV files into your postgres database (Follow instructions from installer script)
 
 - Start the EDDN listener
 
-    python eddnclient.py development.ini
+    python eddnclient.py <yourfile.ini>
 
 - Start the API
 
-    env/bin/pserve development.ini
+    env/bin/pserve <yourfile.ini>
