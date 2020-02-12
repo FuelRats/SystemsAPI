@@ -93,7 +93,7 @@ def setup_models(dbsession, env):
     lm = models.landmark.Landmark(name="Sol", x=0, y=0, z=0)
     dbsession.add(lm)
     settings = env['request'].registry.settings
-    filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'bodies']
+    filelist = ['systemsWithCoordinates', 'systemsWithoutCoordinates', 'systemsPopulated', 'stars', 'planets']
     if 'stardb_host' not in settings:
         print("Your config does not specify a host for downloading E:D galaxy map data. You will have to"
               "download and inject the data manually into the database.")
