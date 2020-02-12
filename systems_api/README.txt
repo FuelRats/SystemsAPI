@@ -1,7 +1,7 @@
 Systems API
 ===========
 
-Getting Started
+Installing
 ---------------
 
 - Change directory into your newly created project.
@@ -22,22 +22,18 @@ Getting Started
 
 - Initialize and upgrade the database using Alembic.
 
-    - Generate your first revision.
+        env/bin/alembic -c development.ini upgrade unindexed
 
-        env/bin/alembic -c development.ini revision --autogenerate -m "init"
-
-    - Upgrade to that revision.
-
-        env/bin/alembic -c development.ini upgrade head
-
-- Load default data into the database using a script.
+- Download and initialize the database
 
     env/bin/initialize_systems_api_db development.ini
 
-- Run your project's tests.
+- Inject the downloaded CSV files into your postgres database (Follow instructions from installer script)
 
-    env/bin/pytest
+- Start the EDDN listener
 
-- Run your project.
+    python eddnclient.py development.ini
+
+- Start the API
 
     env/bin/pserve development.ini
