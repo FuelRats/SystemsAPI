@@ -69,6 +69,7 @@ def upgrade():
         sa.Column('volcanismType', sa.Text(), nullable=True),
         sa.Column('atmosphereType', sa.Text(), nullable=True),
         sa.Column('atmosphereComposition', postgresql.JSONB(astext_type=Text()), nullable=True),
+        sa.Column('solidComposition', postgresql.JSONB(astext_type=Text()), nullable=True),
         sa.Column('terraformingState', sa.Text(), nullable=True),
         sa.Column('orbitalPeriod', sa.Float(), nullable=True),
         sa.Column('semiMajorAxis', sa.Float(), nullable=True),

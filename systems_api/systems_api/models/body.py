@@ -32,6 +32,7 @@ class Body(Base):
     volcanismType = Column(Text)
     atmosphereType = Column(Text)
     atmosphereComposition = Column(JSONB)
+    solidComposition = Column(JSONB)
     terraformingState = Column(Text)
     orbitalPeriod = Column(Float)
     semiMajorAxis = Column(Float)
