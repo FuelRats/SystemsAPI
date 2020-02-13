@@ -31,7 +31,7 @@ class Star(Base):
     absoluteMagnitude = Column(Float)
     solarMasses = Column(Float)
     solarRadius = Column(Float)
-    surfaceTemperature = Column(BigInteger)
+    surfaceTemperature = Column(Float)
     orbitalPeriod = Column(Float)
     semiMajorAxis = Column(Float)
     orbitalEccentricity = Column(Float)

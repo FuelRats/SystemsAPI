@@ -101,7 +101,7 @@ def upgrade():
         sa.Column('absoluteMagnitude', sa.Float(), nullable=True),
         sa.Column('solarMasses', sa.Float(), nullable=True),
         sa.Column('solarRadius', sa.Float(), nullable=True),
-        sa.Column('surfaceTemperature', sa.BigInteger(), nullable=True),
+        sa.Column('surfaceTemperature', sa.Float(), nullable=True),
         sa.Column('orbitalPeriod', sa.Float(), nullable=True),
         sa.Column('semiMajorAxis', sa.Float(), nullable=True),
         sa.Column('orbitalEccentricity', sa.Float(), nullable=True),
