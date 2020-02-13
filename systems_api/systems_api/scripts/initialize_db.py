@@ -132,7 +132,7 @@ def parse_args(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'config_uri',
-        help='Configuration file, e.g., development.ini',
+        help='Configuration file, e.g., development.ini.template',
     )
     return parser.parse_args(argv[1:])
 
@@ -156,5 +156,5 @@ might be caused by one of the following things:
 
 2.  Your database server may not be running.  Check that the
     database server referred to by the "sqlalchemy.url" setting in
-    your "development.ini" file is running.
+    your "development.ini.template" file is running.
             ''')
