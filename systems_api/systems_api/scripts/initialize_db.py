@@ -124,7 +124,7 @@ def setup_models(dbsession, env):
             for data in iter(lambda: infile.read(100*1024), b''):
                 outfile.write(decompressor.decompress(data))
     print("Complete!")
-    print("You now need to inject these CSV files into your postgres database using the following command:")
+    print("You now need to inject these CSV files into your postgres database using the following command in psql:")
     print("COPY <table> from <csvfile.csv> WITH CSV HEADER QUOTE AS '\"' ESCAPE AS '\\' DELIMITER E',';")
 
 
