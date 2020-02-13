@@ -7,6 +7,7 @@ Requirements
 - Python >3.6 with python-dev installed.
 - Postgresql >10 with dev headers, and extensions pg_trgm and fuzzystrmatch enabled.
 - About 200GB of disk space. This will grow with time as the galaxy DB grows.
+- pgloader
 
 Installing
 ---------------
@@ -40,7 +41,11 @@ Installing
 
     env/bin/initialize_systems_api_db <yourfile.ini>
 
-- Inject the downloaded CSV files into your postgres database (Follow instructions from installer script)
+- Inject the downloaded CSV files into your postgres database using pgloader
+    pgloader --context <yourfile.ini> csv.load
+
+- Apply indexes to the database
+        env/bin/alembic -c <yourfile.ini> upgrade indexes
 
 - Start the EDDN listener
 
