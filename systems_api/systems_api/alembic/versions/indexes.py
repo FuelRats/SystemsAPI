@@ -9,16 +9,6 @@ depends_on = None
 
 
 def upgrade():
-    op.create_index('psystem_idx_id64', 'populated_systems', ['id64'], unique=True)
-    op.create_index('psystem_idx_systemid64', 'populated_systems', ['name'], unique=False)
-    op.create_index('system_idx_id64', 'systems', ['id64'], unique=True)
-    op.create_index('system_idx_name_btree', 'systems', ['name'], unique=False, postgresql_using='btree')
-    op.create_index('system_idx_name_gin', 'systems', ['name'], unique=False, postgresql_using='gin', postgresql_ops={'name': 'gin_trgm_ops'})
-    # op.create_index('system_idx_name_soundex', 'systems', ['name'], unique=False, postgresql_using='soundex')
-    op.create_index('body_idx_id64', 'bodies', ['id64'], unique=True)
-    op.create_index('body_idx_systemid64', 'bodies', ['systemId64'], unique=False)
-    op.create_index('star_idx_id64', 'stars', ['id64'], unique=True)
-    op.create_index('star_idx_systemid64', 'stars', ['systemId64'], unique=False)
     sa.PrimaryKeyConstraint('name', name=op.f('pk_landmarks'))
     sa.PrimaryKeyConstraint('id', name=op.f('pk_models'))
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_permit_systems'))
@@ -30,6 +20,16 @@ def upgrade():
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_stars'))
     sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stations_systemId64_systems')),
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_stations'))
+    op.create_index('psystem_idx_id64', 'populated_systems', ['id64'], unique=True)
+    op.create_index('psystem_idx_systemid64', 'populated_systems', ['name'], unique=False)
+    op.create_index('system_idx_id64', 'systems', ['id64'], unique=True)
+    op.create_index('system_idx_name_btree', 'systems', ['name'], unique=False, postgresql_using='btree')
+    op.create_index('system_idx_name_gin', 'systems', ['name'], unique=False, postgresql_using='gin', postgresql_ops={'name': 'gin_trgm_ops'})
+    # op.create_index('system_idx_name_soundex', 'systems', ['name'], unique=False, postgresql_using='soundex')
+    op.create_index('body_idx_id64', 'bodies', ['id64'], unique=True)
+    op.create_index('body_idx_systemid64', 'bodies', ['systemId64'], unique=False)
+    op.create_index('star_idx_id64', 'stars', ['id64'], unique=True)
+    op.create_index('star_idx_systemid64', 'stars', ['systemId64'], unique=False)
 
 
 def downgrade():
