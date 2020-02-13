@@ -53,8 +53,8 @@ def search(request):
     match = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
         filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc()).limit(1)
     for candidate in match:
-        candidates.append({'name': candidate.name, 'similarity': 1,
-                           'permit_required': True if candidate.id64 in perm_systems else False})
+        candidates.append({'name': candidate[0].name, 'similarity': 1,
+                           'permit_required': True if candidate[0].id64 in perm_systems else False})
     if match.count > 0:
         return {'meta': {'name': candidates[0].name, 'type': 'Perfect match'}, 'data': candidates}
 

@@ -1,6 +1,12 @@
 Systems API
 ===========
 
+Requirements
+---------------
+
+- Python >3.6 with python-dev installed.
+- Postgresql >10 with extensions pg_trgm and fuzzystrmatch enabled.
+-
 Installing
 ---------------
 
