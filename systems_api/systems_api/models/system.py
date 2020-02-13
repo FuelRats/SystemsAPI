@@ -4,10 +4,12 @@ from sqlalchemy import (
     Text,
     DateTime,
     Index,
-    Float,
-    func, text)
+    text,
+)
 
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
+
 from .meta import Base
 
 
@@ -18,6 +20,8 @@ class System(Base):
     coords = Column(JSONB)
     date = Column(DateTime)
     date.info.update({'pyramid_jsonapi': {'visible': False}})
+    planets = relationship("Body")
+    stars = relationship("Star")
 
 
 Index('system_idx_id64', System.id64, unique=True)
