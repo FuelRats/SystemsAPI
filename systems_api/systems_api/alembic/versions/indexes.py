@@ -19,6 +19,17 @@ def upgrade():
     op.create_index('body_idx_systemid64', 'bodies', ['systemId64'], unique=False)
     op.create_index('star_idx_id64', 'stars', ['id64'], unique=True)
     op.create_index('star_idx_systemid64', 'stars', ['systemId64'], unique=False)
+    sa.PrimaryKeyConstraint('name', name=op.f('pk_landmarks'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_models'))
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_permit_systems'))
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_populated_systems'))
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_systems'))
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_bodies_systemId64_systems')),
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_bodies'))
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stars_systemId64_systems')),
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_stars'))
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stations_systemId64_systems')),
+    sa.PrimaryKeyConstraint('id64', name=op.f('pk_stations'))
 
 
 def downgrade():
@@ -32,3 +43,4 @@ def downgrade():
     op.drop_index('system_idx_id64', table_name='systems')
     op.drop_index('psystem_idx_systemid64', table_name='populated_systems')
     op.drop_index('psystem_idx_id64', table_name='populated_systems')
+    op.drop_index('my_index', table_name='models')

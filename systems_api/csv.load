@@ -12,6 +12,19 @@ LOAD CSV
                 on error resume next
         SET work_mem to '{{work_mem}}', maintenance_work_mem to '{{maintenance_work_mem}}';
 AND LOAD CSV
+        FROM 'systemsPopulated.csv'
+        INTO {{db_uri}}
+        TARGET TABLE populated_systems
+
+        WITH truncate,
+                drop indexes,
+                skip header = 1,
+                fields optionally enclosed by '"',
+                fields escaped by backslash-quote,
+                fields terminated by ',',
+                on error resume next
+        SET work_mem to '{{work_mem}}', maintenance_work_mem to '{{maintenance_work_mem}}';
+AND LOAD CSV
         FROM 'stars.csv'
         INTO {{db_uri}}
         TARGET TABLE stars

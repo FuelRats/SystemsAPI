@@ -24,18 +24,15 @@ def upgrade():
         sa.Column('x', sa.Float(), nullable=True),
         sa.Column('y', sa.Float(), nullable=True),
         sa.Column('z', sa.Float(), nullable=True),
-        sa.PrimaryKeyConstraint('name', name=op.f('pk_landmarks'))
     )
     op.create_table('models',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.Text(), nullable=True),
         sa.Column('value', sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint('id', name=op.f('pk_models'))
     )
     op.create_index('my_index', 'models', ['name'], unique=True, mysql_length=255)
     op.create_table('permit_systems',
         sa.Column('id64', sa.BigInteger(), nullable=False),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_permit_systems'))
     )
     op.create_table('populated_systems',
         sa.Column('id64', sa.BigInteger(), nullable=False),
@@ -43,14 +40,12 @@ def upgrade():
         sa.Column('coords', postgresql.JSONB(astext_type=Text()), nullable=True),
         sa.Column('controllingFaction', postgresql.JSONB(astext_type=Text()), nullable=True),
         sa.Column('date', sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_populated_systems'))
     )
     op.create_table('systems',
         sa.Column('id64', sa.BigInteger(), nullable=False),
         sa.Column('name', sa.Text(), nullable=True),
         sa.Column('coords', postgresql.JSONB(astext_type=Text()), nullable=True),
         sa.Column('date', sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_systems'))
     )
     op.create_table('bodies',
         sa.Column('id64', sa.BigInteger(), nullable=False),
@@ -84,8 +79,6 @@ def upgrade():
         sa.Column('updateTime', sa.DateTime(), nullable=True),
         sa.Column('systemId64', sa.BigInteger(), nullable=True),
         sa.Column('systemName', sa.Text(), nullable=True),
-        sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_bodies_systemId64_systems')),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_bodies'))
     )
     op.create_table('stars',
         sa.Column('id64', sa.BigInteger(), nullable=False),
@@ -115,8 +108,6 @@ def upgrade():
         sa.Column('updateTime', sa.DateTime(), nullable=True),
         sa.Column('systemId64', sa.BigInteger(), nullable=True),
         sa.Column('systemName', sa.Text(), nullable=True),
-        sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stars_systemId64_systems')),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_stars'))
     )
     op.create_table('stations',
         sa.Column('id64', sa.BigInteger(), nullable=False),
@@ -134,8 +125,6 @@ def upgrade():
         sa.Column('updateTime', sa.DateTime(), nullable=True),
         sa.Column('systemId64', sa.BigInteger(), nullable=True),
         sa.Column('systemName', sa.Text(), nullable=True),
-        sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stations_systemId64_systems')),
-        sa.PrimaryKeyConstraint('id64', name=op.f('pk_stations'))
     )
     # ### end Alembic commands ###
 
@@ -148,7 +137,6 @@ def downgrade():
     op.drop_table('systems')
     op.drop_table('populated_systems')
     op.drop_table('permit_systems')
-    op.drop_index('my_index', table_name='models')
     op.drop_table('models')
     op.drop_table('landmarks')
     # ### end Alembic commands ###
