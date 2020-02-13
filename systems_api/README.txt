@@ -5,8 +5,9 @@ Requirements
 ---------------
 
 - Python >3.6 with python-dev installed.
-- Postgresql >10 with extensions pg_trgm and fuzzystrmatch enabled.
--
+- Postgresql >10 with dev headers, and extensions pg_trgm and fuzzystrmatch enabled.
+- About 200GB of disk space. This will grow with time as the galaxy DB grows.
+
 Installing
 ---------------
 
