@@ -55,8 +55,8 @@ def search(request):
     for candidate in match:
         candidates.append({'name': candidate[0].name, 'similarity': 1,
                            'permit_required': True if candidate[0].id64 in perm_systems else False})
-    if match.count > 0:
-        return {'meta': {'name': candidates[0].name, 'type': 'Perfect match'}, 'data': candidates}
+    if match.count() > 0:
+        return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
 
     if searchtype == 'lev':
         result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
