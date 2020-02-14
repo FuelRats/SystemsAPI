@@ -88,10 +88,12 @@ def coerce(version):
 
 
 def validsoftware(name, version):
+    global ver
     if not name:
         return False
     if not version:
         return False
+
     try:
         if semver.parse(version):
             ver = version
