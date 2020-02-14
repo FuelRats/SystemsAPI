@@ -14,12 +14,12 @@ def upgrade():
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_permit_systems'))
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_populated_systems'))
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_systems'))
-    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_bodies_systemId64_systems')),
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_bodies'))
-    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stars_systemId64_systems')),
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_stars'))
-    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stations_systemId64_systems')),
     sa.PrimaryKeyConstraint('id64', name=op.f('pk_stations'))
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_bodies_systemId64_systems')),
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stars_systemId64_systems')),
+    sa.ForeignKeyConstraint(['systemId64'], ['systems.id64'], name=op.f('fk_stations_systemId64_systems')),
     op.create_index('psystem_idx_id64', 'populated_systems', ['id64'], unique=True)
     op.create_index('psystem_idx_systemid64', 'populated_systems', ['name'], unique=False)
     op.create_index('system_idx_id64', 'systems', ['id64'], unique=True)
