@@ -7,7 +7,7 @@ import time
 import os
 import semver
 
-from xmlrpc.client import ServerProxy, Error, ProtocolError
+from xmlrpc.client import ServerProxy, ProtocolError
 
 from pyramid.paster import (
     get_appsettings,
@@ -18,14 +18,14 @@ from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
 from sqlalchemy.exc import DataError
 
-from .models import (
+from systems_api.models import (
     get_engine,
     get_session_factory,
     get_tm_session,
     )
 
 
-from .models import Star, System
+from systems_api.models import Star, System
 
 __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
