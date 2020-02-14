@@ -171,7 +171,7 @@ def main(argv=sys.argv):
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
                 totmsg = totmsg + 1
-                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}", end='')
+                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}\r", end='')
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion'])\
                         and __json['$schemaRef'] in __allowedSchema:
 
