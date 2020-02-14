@@ -29,7 +29,7 @@ def search(request):
     if result.count() > 0:
         candidates = []
         for row in result:
-            candidates.append(row['name'])
+            candidates.append(row.name)
         response = Response(content_type='application/json')
         response.text = json.dumps(candidates)
         return response
