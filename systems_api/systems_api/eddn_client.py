@@ -83,8 +83,7 @@ def coerce(version):
         for key, value in match.groupdict().items()
     }
     ver = str(semver.VersionInfo(**ver))
-    rest = match.string[match.end() :]
-    return ver, rest
+    return ver
 
 
 def validsoftware(name, version):
