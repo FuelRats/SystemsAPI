@@ -107,7 +107,10 @@ def main(argv=sys.argv):
     starcount = 0
     totmsg = 0
     hmessages= 0
-    proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
+    try:
+        proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
+    except ProtocolError as e:
+        print(f"Failed to send start message to XMLRPC. {e.errmsg}")
     while True:
         try:
             subscriber.connect(__relayEDDN)
