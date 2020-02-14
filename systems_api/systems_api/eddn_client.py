@@ -88,17 +88,12 @@ def coerce(version):
 
 
 def validsoftware(name, version):
-    global ver
     if not name:
         return False
     if not version:
         return False
+    ver = coerce(version)
 
-    try:
-        if semver.parse(version):
-            ver = version
-    except ValueError:
-        ver = coerce(version)
     if name.casefold() == "e:d market connector".casefold():
         if semver.compare(ver, "2.4.9") < 0:
             print("Ignored old EDMC message.")
