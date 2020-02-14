@@ -59,6 +59,8 @@ BASEVERSION = re.compile(
     """,
     re.VERBOSE,
 )
+
+
 def coerce(version):
     """
     Convert an incomplete version string into a semver-compatible VersionInfo
@@ -76,7 +78,7 @@ def coerce(version):
     """
     match = BASEVERSION.search(version)
     if not match:
-        return (None, version)
+        return version
 
     ver = {
         key: 0 if value is None else value
@@ -125,6 +127,8 @@ def usage(argv):
 def main(argv=sys.argv):
     if len(argv) < 2:
         usage(argv)
+    proxy = None
+    serverurl = None
     config_uri = argv[1]
     options = parse_vars(argv[2:])
     setup_logging(config_uri)
@@ -132,8 +136,9 @@ def main(argv=sys.argv):
     engine = get_engine(settings)
     session_factory = get_session_factory(engine)
     session = get_tm_session(session_factory, transaction.manager)
-    serverurl = settings['xml_proxy'] if 'xml_proxy' in settings else 'https://irc.eu.fuelrats.com:6080/xmlrpc'
-    proxy = ServerProxy(serverurl)
+    if 'xml_proxy' in settings:
+        serverurl = settings['xml_proxy']
+        proxy = ServerProxy(serverurl)
 
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
@@ -147,10 +152,11 @@ def main(argv=sys.argv):
     starcount = 0
     totmsg = 0
     hmessages= 0
-    try:
-        proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
-    except ProtocolError as e:
-        print(f"Failed to send start message to XMLRPC. {e.errmsg}")
+    if proxy:
+        try:
+            proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
+        except ProtocolError as e:
+            print(f"Failed to send start message to XMLRPC. {e.errmsg}")
     while True:
         try:
             subscriber.connect(__relayEDDN)
@@ -168,40 +174,41 @@ def main(argv=sys.argv):
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion'])\
                         and __json['$schemaRef'] in __allowedSchema:
 
-                    if time.time() > (starttime + 3600 * 24):
-                        try:
-                            startot = session.query(func.count(Star.id64)).scalar()
-                            systot = session.query(func.count(System.id64)).scalar()
-                            proxy.command("botserv", "Absolver", f"say #ratchat [\x0315SAPI\x03] Daily report: "
-                                                                 f"{'{:,}'.format(messages)} messages processed"
-                                                                 f", {'{:,}'.format(syscount)} new systems,"
-                                                                 f"  {'{:,}'.format(starcount)} new stars."
-                                                                 f" DB contains {'{:,}'.format(startot)} stars "
-                                                                 f"and {'{:,}'.format(systot)} systems.")
-                            messages = 0
-                            syscount = 0
-                            starcount = 0
-                            starttime = time.time()
-                        except TimeoutError:
-                            print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
-                            starttime = starttime + 60
-                        except ProtocolError as e:
-                            print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
-                            starttime = time.time()
-                    if time.time() > (lasthourly + 3600):
-                        try:
-                            proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
-                                          f" {hmessages}, {totmsg-hmessages} ignored.")
-                            lasthourly = time.time()
-                            totmsg = 0
-                            hmessages = 0
+                    if proxy:
+                        if time.time() > (starttime + 3600 * 24):
+                            try:
+                                startot = session.query(func.count(Star.id64)).scalar()
+                                systot = session.query(func.count(System.id64)).scalar()
+                                proxy.command("botserv", "Absolver", f"say #ratchat [\x0315SAPI\x03] Daily report: "
+                                                                     f"{'{:,}'.format(messages)} messages processed"
+                                                                     f", {'{:,}'.format(syscount)} new systems,"
+                                                                     f"  {'{:,}'.format(starcount)} new stars."
+                                                                     f" DB contains {'{:,}'.format(startot)} stars "
+                                                                     f"and {'{:,}'.format(systot)} systems.")
+                                messages = 0
+                                syscount = 0
+                                starcount = 0
+                                starttime = time.time()
+                            except TimeoutError:
+                                print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
+                                starttime = starttime + 60
+                            except ProtocolError as e:
+                                print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
+                                starttime = time.time()
+                        if time.time() > (lasthourly + 3600):
+                            try:
+                                proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
+                                              f" {hmessages}, {totmsg-hmessages} ignored.")
+                                lasthourly = time.time()
+                                totmsg = 0
+                                hmessages = 0
 
-                        except TimeoutError:
-                            print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
-                            lasthourly = lasthourly + 60
-                        except ProtocolError as e:
-                            print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
-                            lasthourly = time.time()
+                            except TimeoutError:
+                                print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
+                                lasthourly = lasthourly + 60
+                            except ProtocolError as e:
+                                print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
+                                lasthourly = time.time()
 
                     data = __json['message']
                     messages = messages + 1
