@@ -64,9 +64,9 @@ Installing
 - Apply indexes to the database
         env/bin/alembic -c <yourfile.ini> upgrade indexes
 
-- Start the EDDN listener
+- Start the EDDN listener (If you want live updates from EDDN. You probably do.)
 
-        python eddnclient.py <yourfile.ini>
+        python systems_api/eddn_client.py <yourfile.ini>
 
 - Start the API
 

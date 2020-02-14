@@ -171,6 +171,7 @@ def main(argv=sys.argv):
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
                 totmsg = totmsg + 1
+                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}", end='')
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion'])\
                         and __json['$schemaRef'] in __allowedSchema:
 
@@ -259,7 +260,6 @@ def main(argv=sys.argv):
                                                    updateTime=data['timestamp'])
                                     try:
                                         session.add(newstar)
-                                        print("Added new star.")
                                         transaction.commit()
                                     except DataError:
                                         print("Failed to add star - Data Error!")
