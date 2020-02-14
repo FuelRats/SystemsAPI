@@ -6,6 +6,7 @@ import sys
 import time
 import os
 import semver
+import re
 
 from xmlrpc.client import ServerProxy, ProtocolError
 
@@ -46,27 +47,69 @@ __blockedSoftware = [
     "eva".casefold()
 ]
 
+BASEVERSION = re.compile(
+    r"""[vV]?
+        (?P<major>0|[1-9]\d*)
+        (\.
+        (?P<minor>0|[1-9]\d*)
+        (\.
+            (?P<patch>0|[1-9]\d*)
+        )?
+        )?
+    """,
+    re.VERBOSE,
+)
+def coerce(version):
+    """
+    Convert an incomplete version string into a semver-compatible VersionInfo
+    object
+
+    * Tries to detect a "basic" version string (``major.minor.patch``).
+    * If not enough components can be found, missing components are
+        set to zero to obtain a valid semver version.
+
+    :param str version: the version string to convert
+    :return: a tuple with a :class:`VersionInfo` instance (or ``None``
+        if it's not a version) and the rest of the string which doesn't
+        belong to a basic version.
+    :rtype: tuple(:class:`VersionInfo` | None, str)
+    """
+    match = BASEVERSION.search(version)
+    if not match:
+        return (None, version)
+
+    ver = {
+        key: 0 if value is None else value
+        for key, value in match.groupdict().items()
+    }
+    ver = semver.VersionInfo(**ver)
+    rest = match.string[match.end() :]
+    return ver, rest
+
 
 def validsoftware(name, version):
     if not name:
         return False
     if not version:
         return False
-    ver = semver.parse(version)
+    try:
+        ver = semver.parse(version)
+    except ValueError:
+        ver = coerce(version)
     if name.casefold() == "e:d market connector".casefold():
-        if semver.compare(version, "2.4.9.0") < 0:
+        if semver.compare(ver, "2.4.9") < 0:
             print("Ignored old EDMC message.")
             return False
     if name.casefold() == "EDDiscovery".casefold():
-        if semver.compare(version, "9.1.1.0") < 0:
+        if semver.compare(ver, "9.1.1") < 0:
             print("Ignored old EDDiscovery message.")
             return False
     if name.casefold() == "EDDI".casefold():
-        if semver.compare(version, "2.4.5") < 0:
+        if semver.compare(ver, "2.4.5") < 0:
             print("Ignored old EDDI message.")
             return False
     if name.casefold() == "Moonlight".casefold():
-        if semver.compare(version, "1.3.4") < 0:
+        if semver.compare(ver, "1.3.4") < 0:
             print("Ignored old Moonlight message.")
             return False
     if name.casefold() in __blockedSoftware:
