@@ -26,6 +26,7 @@ requires = [
     'simplejson',
     'pyramid_jsonapi',
     'wget',
+    'semver',
 ]
 
 tests_require = [
