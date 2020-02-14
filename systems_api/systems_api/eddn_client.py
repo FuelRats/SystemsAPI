@@ -93,7 +93,8 @@ def validsoftware(name, version):
     if not version:
         return False
     try:
-        ver = version
+        if semver.parse(version):
+            ver = version
     except ValueError:
         ver = coerce(version)
     if name.casefold() == "e:d market connector".casefold():
