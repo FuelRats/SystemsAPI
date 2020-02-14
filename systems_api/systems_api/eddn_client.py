@@ -82,7 +82,7 @@ def coerce(version):
         key: 0 if value is None else value
         for key, value in match.groupdict().items()
     }
-    ver = semver.VersionInfo(**ver)
+    ver = str(semver.VersionInfo(**ver))
     rest = match.string[match.end() :]
     return ver, rest
 
