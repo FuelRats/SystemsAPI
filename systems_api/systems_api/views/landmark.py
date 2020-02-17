@@ -24,7 +24,7 @@ def landmark(request):
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
         name = str(request.params['name'])
-        result = request.dbsession.query(System).filter(name(f"{name}")).limit(1)
+        result = request.dbsession.query(System).filter(System.name == name).limit(1)
         result2 = request.dbsession.query(Landmark)
         if name in result2:
             return {'meta': {'error': 'System is already a landmark.'}}
@@ -40,7 +40,7 @@ def landmark(request):
         else:
             return {'meta': {'error': 'System not found.'}}
     name = str(request.params['name'])
-    result = request.dbsession.query(System).filter(name(name)).limit(1)
+    result = request.dbsession.query(System).filter(System.name == name).limit(1)
     if result.rowcount > 0:
         for row in result:
             x = float(row['coords']['x'])

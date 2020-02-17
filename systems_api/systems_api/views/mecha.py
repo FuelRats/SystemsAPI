@@ -25,6 +25,9 @@ def mecha(request):
     name = request.params['name']
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+    # Temp!
+    query = request.dbsession.query(System).filter(func.dmetaphone(System.name) == func.dmetaphone(name))
+    print(query)
     pmatch = request.dbsession.query(System).filter(System.name == name)
     for candidate in pmatch:
         candidates.append({'name': candidate.name, 'similarity': 1,
@@ -65,6 +68,7 @@ def mecha(request):
 
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
+
             result = request.dbsession.execute(sql)
             for candidate in result:
                 candidates.append({'name': candidate.name, 'similarity': candidate.similarity,
