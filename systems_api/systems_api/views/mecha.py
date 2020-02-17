@@ -28,6 +28,7 @@ def mecha(request):
     pmatch = request.dbsession.query(System).filter(System.name == name)
     for candidate in pmatch:
         candidates.append({'name': candidate.name, 'similarity': 1,
+                           'id64': candidate.id64,
                            'permit_required': True if candidate.id64 in perm_systems else False})
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
@@ -36,6 +37,7 @@ def mecha(request):
         filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc())
     for candidate in result:
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
+                           'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
@@ -43,6 +45,7 @@ def mecha(request):
             filter(System.name.ilike(name+"%")).order_by(func.similarity(System.name, name).desc())
         for candidate in pmatch:
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
+                               'id64': candidate[0].id64,
                                'permit_required': True if candidate[0].id64 in perm_systems else False})
         if len(candidates) > 0:
             return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
@@ -54,6 +57,7 @@ def mecha(request):
                 for candidate in pmatch:
                     # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
                     candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
+                                       'id64': candidate[0].id64,
                                        'permit_required': True if candidate[0].id64 in perm_systems else False})
 
         else:
@@ -64,6 +68,7 @@ def mecha(request):
             result = request.dbsession.execute(sql)
             for candidate in result:
                 candidates.append({'name': candidate.name, 'similarity': candidate.similarity,
+                                   'id64': candidate.id64,
                                    'permit_required': True if candidate.id64 in perm_systems else False})
     if len(candidates) < 1:
         # We ain't got shit. Give up.

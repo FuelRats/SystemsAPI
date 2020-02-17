@@ -17,8 +17,6 @@ def setup_models(dbsession, env):
     Add or update models / fixtures in the database.
 
     """
-    model = models.mymodel.MyModel(name='one', value=1)
-    dbsession.add(model)
     permit_systems = [
         10477373803,
         10494151019,

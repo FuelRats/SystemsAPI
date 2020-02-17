@@ -54,6 +54,7 @@ def search(request):
         filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc()).limit(1)
     for candidate in match:
         candidates.append({'name': candidate[0].name, 'similarity': 1,
+                           'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False})
     if match.count() > 0:
         return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
@@ -77,11 +78,11 @@ def search(request):
         sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                    f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
     if searchtype == "fulltext":
-        sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
+        sql = text(f"SELECT name, id64 FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
     if not result:
         # We haven't gotten a ORM result yet, execute manual SQL.
         result = request.dbsession.execute(sql)
     for row in result:
-        candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id'],
+        candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
                            'permit_required': True if row.id64 in perm_systems else False})
     return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}

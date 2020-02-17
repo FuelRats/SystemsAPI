@@ -27,6 +27,8 @@ requires = [
     'pyramid_jsonapi',
     'wget',
     'semver',
+    'colander',
+    'deform',
 ]
 
 tests_require = [
