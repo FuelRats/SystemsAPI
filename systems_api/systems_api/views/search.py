@@ -62,6 +62,11 @@ def search(request):
     if searchtype == 'lev':
         result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
             filter(System.name.ilike(f"{name}%")).order_by(func.similarity(System.name, name).desc()).limit(limit)
+        for row in result:
+            candidates.append({'name': row[0].name, 'similarity': row[1], 'id64': row[0].id64,
+                               'permit_required': True if row[0].id64 in perm_systems else False})
+        return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
+
     if searchtype == 'soundex':
         sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                    f"WHERE soundex(name) = soundex('{name}') ORDER BY "
