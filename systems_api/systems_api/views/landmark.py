@@ -44,9 +44,9 @@ def landmark(request):
     if result:
         for row in result:
             print(f"Coords: {row.coords}")
-            x = float(row.coords[0])
-            y = float(row.coords[1])
-            z = float(row.coords[2])
+            x = float(row.coords['x'])
+            y = float(row.coords['y'])
+            z = float(row.coords['z'])
             rname = str(row.name)
         if name.lower() != rname.lower():
             return {'meta': {'error': 'Ambiguous system name!'}}
