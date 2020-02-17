@@ -41,7 +41,7 @@ def landmark(request):
             return {'meta': {'error': 'System not found.'}}
     name = str(request.params['name'])
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
-    if result.rowcount > 0:
+    if result:
         for row in result:
             x = float(row['coords']['x'])
             y = float(row['coords']['y'])
