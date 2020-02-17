@@ -19,8 +19,8 @@ def landmark(request):
         result = request.dbsession.query(Landmark)
         landmarks = []
         for row in result:
-            landmarks.append({'name': row['name'], 'x': row['x'], 'y': row['y'],
-                              'z': row['z']})
+            landmarks.append({'name': row.name, 'x': row.x, 'y': row.y,
+                              'z': row.z})
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
         name = str(request.params['name'])
@@ -43,10 +43,10 @@ def landmark(request):
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
     if result:
         for row in result:
-            x = float(row['coords']['x'])
-            y = float(row['coords']['y'])
-            z = float(row['coords']['z'])
-            rname = str(row['name'])
+            x = float(row.coords[0])
+            y = float(row.coords[1])
+            z = float(row.coords[2])
+            rname = str(row.name)
         if name.lower() != rname.lower():
             return {'meta': {'error': 'Ambiguous system name!'}}
         sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
