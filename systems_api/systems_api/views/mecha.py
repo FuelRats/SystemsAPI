@@ -37,7 +37,7 @@ def mecha(request):
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
     result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-        filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc())
+        filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc().limit(10))
     for candidate in result:
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                            'id64': candidate[0].id64,
@@ -46,7 +46,7 @@ def mecha(request):
         # Try an ILIKE with a wildcard at the end.
         print("Strat: ILIKE wildcard")
         pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-            filter(System.name.ilike(name+"%")).order_by(func.similarity(System.name, name).desc())
+            filter(System.name.ilike(name+"%")).order_by(func.similarity(System.name, name).desc().limit(10))
         for candidate in pmatch:
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                                'id64': candidate[0].id64,
@@ -57,7 +57,7 @@ def mecha(request):
         if len(name.split(' ')) < 2:
             print("Strat: Trigram")
             pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-                filter(System.name % name).order_by(func.similarity(System.name, name).desc())
+                filter(System.name % name).order_by(func.similarity(System.name, name).desc().limit(10))
             if pmatch.count() > 0:
                 for candidate in pmatch:
                     # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
@@ -69,7 +69,7 @@ def mecha(request):
             # Last effort, try a dimetaphone search.
             print("Strat: Dmeta")
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
-                       f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
+                       f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 10")
 
             result = request.dbsession.execute(sql)
             for candidate in result:
