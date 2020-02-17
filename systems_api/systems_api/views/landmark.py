@@ -43,6 +43,7 @@ def landmark(request):
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
     if result:
         for row in result:
+            print(f"Coords: {row.coords}")
             x = float(row.coords[0])
             y = float(row.coords[1])
             z = float(row.coords[2])
