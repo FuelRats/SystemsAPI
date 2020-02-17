@@ -26,8 +26,8 @@ def mecha(request):
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
     # Temp!
-    query = request.dbsession.query(System).filter(func.dmetaphone(System.name) == func.dmetaphone(name))
-    print(query)
+    #query = request.dbsession.query(System).filter(func.dmetaphone(System.name) == func.dmetaphone(name))
+    #print(query)
     pmatch = request.dbsession.query(System).filter(System.name == name)
     for candidate in pmatch:
         candidates.append({'name': candidate.name, 'similarity': 1,
@@ -44,6 +44,7 @@ def mecha(request):
                            'permit_required': True if candidate[0].id64 in perm_systems else False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
+        print("Strat: ILIKE wildcard")
         pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
             filter(System.name.ilike(name+"%")).order_by(func.similarity(System.name, name).desc())
         for candidate in pmatch:
@@ -54,6 +55,7 @@ def mecha(request):
             return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
         # Try a trigram similarity search if English-ish system name
         if len(name.split(' ')) < 2:
+            print("Strat: Trigram")
             pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
                 filter(System.name % name).order_by(func.similarity(System.name, name).desc())
             if pmatch.count() > 0:
@@ -65,7 +67,7 @@ def mecha(request):
 
         else:
             # Last effort, try a dimetaphone search.
-
+            print("Strat: Dmeta")
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
 
