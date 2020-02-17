@@ -37,7 +37,7 @@ def mecha(request):
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
     result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-        filter(System.name.ilike(name)).limit(10).order_by(func.similarity(System.name, name).desc())
+        filter(System.name.ilike(name)).limit(10).from_self().order_by(func.similarity(System.name, name).desc())
     for candidate in result:
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                            'id64': candidate[0].id64,
@@ -46,7 +46,7 @@ def mecha(request):
         # Try an ILIKE with a wildcard at the end.
         print("Strat: ILIKE wildcard")
         pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-            filter(System.name.ilike(name+"%")).limit(10).order_by(func.similarity(System.name, name).desc())
+            filter(System.name.ilike(name+"%")).limit(10).from_self().order_by(func.similarity(System.name, name).desc())
         for candidate in pmatch:
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                                'id64': candidate[0].id64,
@@ -57,7 +57,7 @@ def mecha(request):
         if len(name.split(' ')) < 2:
             print("Strat: Trigram")
             pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-                filter(System.name % name).limit(10).order_by(func.similarity(System.name, name).desc())
+                filter(System.name % name).limit(10).from_self().order_by(func.similarity(System.name, name).desc())
             if pmatch.count() > 0:
                 for candidate in pmatch:
                     # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
