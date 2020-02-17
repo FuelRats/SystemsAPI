@@ -78,7 +78,7 @@ def search(request):
         sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                    f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
     if searchtype == "fulltext":
-        sql = text(f"SELECT name, id64 FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
+        sql = text(f"SELECT name, id64 FROM systems WHERE name LIKE '{name}%' ORDER BY similarity DESC LIMIT {str(limit)}")
     if not result:
         # We haven't gotten a ORM result yet, execute manual SQL.
         result = request.dbsession.execute(sql)
