@@ -55,7 +55,9 @@ def search(request):
     for candidate in match:
         candidates.append({'name': candidate[0].name, 'similarity': 1,
                            'id64': candidate[0].id64,
-                           'permit_required': True if candidate[0].id64 in perm_systems else False})
+                           'permit_required': True if candidate[0].id64 in perm_systems else False,
+                           'permit_name': permsystems.get(candidate[0].id64).permit_name or None
+                           })
     if match.count() > 0:
         return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
 
@@ -64,7 +66,9 @@ def search(request):
             filter(System.name.ilike(f"{name}%")).order_by(func.similarity(System.name, name).desc()).limit(limit)
         for row in result:
             candidates.append({'name': row[0].name, 'similarity': row[1], 'id64': row[0].id64,
-                               'permit_required': True if row[0].id64 in perm_systems else False})
+                               'permit_required': True if row[0].id64 in perm_systems else False,
+                               'permit_name': permsystems.get(row[0].id64).permit_name or None
+                               })
         return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
 
     if searchtype == 'soundex':
@@ -90,5 +94,7 @@ def search(request):
         result = request.dbsession.execute(sql)
     for row in result:
         candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
-                           'permit_required': True if row.id64 in perm_systems else False})
+                           'permit_required': True if row.id64 in perm_systems else False,
+                           'permit_name': permsystems.get(row.id64).permit_name or None
+                           })
     return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
