@@ -40,10 +40,10 @@ def mecha(request):
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev")
     query = request.dbsession.query(System).from_statement(qtext).params(name=name)
     for candidate in query:
-        candidates.append({'name': candidate[0].name, 'distance': candidate[1],
-                           'id64': candidate[0].id64,
-                           'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': permsystems.get(candidate[0].id64).permit_name or None
+        candidates.append({'name': candidate.name, 'distance': candidate.lev,
+                           'id64': candidate.id64,
+                           'permit_required': True if candidate.id64 in perm_systems else False,
+                           'permit_name': permsystems.get(candidate.id64).permit_name or None
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
