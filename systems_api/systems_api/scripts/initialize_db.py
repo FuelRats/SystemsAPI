@@ -19,7 +19,6 @@ def setup_models(dbsession, env):
     """
     permit_systems = [
         10477373803,
-        10494151019,
         301958431924,
         1733052863178,
         670954497449,
@@ -34,8 +33,6 @@ def setup_models(dbsession, env):
         972566792555,
         1384883652971,
         1109989017963,
-        3932277478106,
-        3107576615650,
         44837112163,
         670685799809,
         121569805492,
@@ -44,28 +41,35 @@ def setup_models(dbsession, env):
         869470816603,
         1350523947317,
         633675453138,
-        633608278738,
         869454039395,
         251012319595,
         938207070571,
         2415675853163,
-        40553617967984,
-        1213084977515,
-        7268292568505,
-        2870246057401,
-        22962505665400,
-        5370319620984,
-        1733187048154,
-        5369245879160,
-        22961431923567,
-        2296141923568,
-        22961431923576,
-        22961431923568,
         1350523947371,
     ]
+    snowflake_permits = {
+        319715002691: "HIP22460 System",
+        40553617967984: "Pilots' Federation District",
+        10494151019: "Beta Hydri",
+        3107576615650: "CQC Home World",
+        1213084977515: "Pilots' Federation District",
+        7268292568505: "Pilots' Federation District",
+        633608278738: "LTT 198",
+        2870246057401: "Pilots' Federation District",
+        22962505665400: "Pilots' Federation District",
+        5370319620984: "Pilots' Federation District",
+        1733187048154: "Pilots' Federation District",
+        3932277478106: "Founders World",
+        5369245879160: "Pilots' Federation District",
+        22961431923576: "Pilots' Federation District",
+        22961431923568: "Pilots' Federation District"
+    }
     print("Adding permit systems...")
     for permit in permit_systems:
         psystem = models.permits.Permits(id64=permit)
+        dbsession.add(psystem)
+    for permit, snowflake in snowflake_permits.items():
+        psystem = models.permits.Permits(id64=permit, permit_name=snowflake)
         dbsession.add(psystem)
     print("Adding default landmarks...")
     lm = models.landmark.Landmark(name="Beagle Point", x=-1111.56, y=-134.22, z=65269.75)

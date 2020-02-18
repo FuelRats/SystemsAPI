@@ -33,6 +33,7 @@ def upgrade():
     op.create_index('my_index', 'models', ['name'], unique=True, mysql_length=255)
     op.create_table('permit_systems',
         sa.Column('id64', sa.BigInteger(), nullable=False),
+        sa.Column('permit_name', sa.Text(), nullable=True),
     )
     op.create_table('populated_systems',
         sa.Column('id64', sa.BigInteger(), nullable=False),
