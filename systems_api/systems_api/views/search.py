@@ -56,7 +56,7 @@ def search(request):
         candidates.append({'name': candidate[0].name, 'similarity': 1,
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': permsystems.get(candidate[0].id64).permit_name or None
+                           'permit_name': permsystems.get(candidate[0].id64).permit_name or None if candidate[0].id64 in perm_systems else False
                            })
     if match.count() > 0:
         return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
@@ -67,7 +67,7 @@ def search(request):
         for row in result:
             candidates.append({'name': row[0].name, 'similarity': row[1], 'id64': row[0].id64,
                                'permit_required': True if row[0].id64 in perm_systems else False,
-                               'permit_name': permsystems.get(row[0].id64).permit_name or None
+                               'permit_name': permsystems.get(row[0].id64).permit_name or None if row[0].id64 in perm_systems else False
                                })
         return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
 
@@ -95,6 +95,6 @@ def search(request):
     for row in result:
         candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
                            'permit_required': True if row.id64 in perm_systems else False,
-                           'permit_name': permsystems.get(row.id64).permit_name or None
+                           'permit_name': permsystems.get(row.id64).permit_name or None if row.id64 in perm_systems else False
                            })
     return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
