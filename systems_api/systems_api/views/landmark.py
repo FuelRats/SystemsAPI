@@ -49,7 +49,7 @@ def landmark(request):
             y = float(row.coords['y'])
             z = float(row.coords['z'])
             rname = str(row.name)
-        if name.lower() != rname.lower():
+        if name.lower() != rname.lower() or not rname:
             return HTTPBadRequest('System name ambiguous or not found.')
         sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
                    f")^2 + (cast(landmarks.y AS FLOAT) - {y}"
