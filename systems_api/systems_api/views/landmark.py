@@ -4,7 +4,7 @@ from pyramid.view import (
 )
 from sqlalchemy import text
 from ..models import Landmark, System
-
+from pyramid.httpexceptions import HTTPBadRequest
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='landmark', renderer='json')
@@ -42,6 +42,7 @@ def landmark(request):
     name = str(request.params['name'])
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
     if result:
+        rname = None
         for row in result:
             print(f"Coords: {row.coords}")
             x = float(row.coords['x'])
@@ -49,7 +50,7 @@ def landmark(request):
             z = float(row.coords['z'])
             rname = str(row.name)
         if name.lower() != rname.lower():
-            return {'meta': {'error': 'Ambiguous system name!'}}
+            return HTTPBadRequest('System name ambiguous or not found.')
         sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
                    f")^2 + (cast(landmarks.y AS FLOAT) - {y}"
                    f")^2 + (cast(landmarks.z AS FLOAT) - {z}"
