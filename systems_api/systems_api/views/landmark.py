@@ -41,7 +41,7 @@ def landmark(request):
             return {'meta': {'error': 'System not found.'}}
     name = str(request.params['name'])
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
-    if result:
+    if result.count() > 0:
         rname = None
         for row in result:
             print(f"Coords: {row.coords}")
@@ -49,7 +49,7 @@ def landmark(request):
             y = float(row.coords['y'])
             z = float(row.coords['z'])
             rname = str(row.name)
-        if name.lower() != rname.lower() or not rname:
+        if name.lower() != rname.lower():
             return HTTPBadRequest('System name ambiguous or not found.')
         sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
                    f")^2 + (cast(landmarks.y AS FLOAT) - {y}"
