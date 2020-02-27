@@ -7,6 +7,14 @@ from ..models import System, Permits
 import pyramid.httpexceptions as exc
 
 
+def checkpermitname(system, permsystems, perms):
+    if system not in perms:
+        return None
+    if permsystems[system] is not None:
+        return permsystems[system]
+    return None
+
+
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='mecha', renderer='json')
 def mecha(request):
@@ -31,8 +39,7 @@ def mecha(request):
         candidates.append({'name': candidate.name, 'similarity': 1,
                            'id64': candidate.id64,
                            'permit_required': True if candidate.id64 in perm_systems else False,
-                           'permit_name': permsystems.get(candidate.id64).permit_name
-                                          or None if candidate.id64 in perm_systems else False
+                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
@@ -46,7 +53,7 @@ def mecha(request):
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
                            'permit_name': permsystems.get(candidate[0].id64).permit_name
-                                          or None if candidate[0].id64 in perm_systems else False
+                                          or None if candidate[0].id64 in perm_systems else None
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
@@ -58,7 +65,7 @@ def mecha(request):
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
                            'permit_name': permsystems.get(candidate[0].id64).permit_name
-                                          or None if candidate[0].id64 in perm_systems else False
+                                          or None if candidate[0].id64 in perm_systems else None
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
@@ -72,9 +79,9 @@ def mecha(request):
                                'id64': candidate[0].id64,
                                'permit_required': True if candidate[0].id64 in perm_systems else False,
                                'permit_name': permsystems.get(candidate[0].id64).permit_name
-                                              or None if candidate[0].id64 in perm_systems else False
+                                              or None if candidate[0].id64 in perm_systems else None
                                })
     if len(candidates) < 1:
         # We ain't got shit. Give up.
         return {'meta': {'name': name, 'error': 'No hits.'}}
-    return {'meta': {'name': name}, 'data': candidates}
+    return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': candidates}
