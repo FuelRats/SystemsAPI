@@ -10,7 +10,7 @@ import pyramid.httpexceptions as exc
 def checkpermitname(system, permsystems, perms):
     if system not in perms:
         return None
-    if permsystems[system] is not None:
+    if permsystems.get(system).permit_name is not None:
         return permsystems[system]
     return None
 
