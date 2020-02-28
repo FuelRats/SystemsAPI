@@ -11,7 +11,7 @@ def checkpermitname(system, permsystems, perms):
     if system not in perms:
         return None
     if permsystems.get(system).permit_name is not None:
-        return permsystems[system]
+        return permsystems.get(system).permit_name
     return None
 
 
