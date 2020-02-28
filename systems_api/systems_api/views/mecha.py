@@ -52,7 +52,7 @@ def mecha(request):
         candidates.append({'name': candidate[0].name, 'distance': candidate[1],
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                           'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
@@ -63,7 +63,7 @@ def mecha(request):
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                           'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
@@ -76,7 +76,7 @@ def mecha(request):
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                                'id64': candidate[0].id64,
                                'permit_required': True if candidate[0].id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                                })
     if len(candidates) < 1:
         # We ain't got shit. Give up.
