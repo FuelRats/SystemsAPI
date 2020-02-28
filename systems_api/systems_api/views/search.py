@@ -10,6 +10,14 @@ import pyramid.httpexceptions as exc
 valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
 
 
+def checkpermitname(system, permsystems, perms):
+    if system not in perms:
+        return None
+    if permsystems[system] is not None:
+        return permsystems[system]
+    return None
+
+
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='search', renderer='json')
 def search(request):
@@ -56,7 +64,7 @@ def search(request):
         candidates.append({'name': candidate[0].name, 'similarity': 1,
                            'id64': candidate[0].id64,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': permsystems.get(candidate[0].id64).permit_name or None if candidate[0].id64 in perm_systems else False
+                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
                            })
     if match.count() > 0:
         return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
@@ -67,7 +75,7 @@ def search(request):
         for row in result:
             candidates.append({'name': row[0].name, 'similarity': row[1], 'id64': row[0].id64,
                                'permit_required': True if row[0].id64 in perm_systems else False,
-                               'permit_name': permsystems.get(row[0].id64).permit_name or None if row[0].id64 in perm_systems else False
+                               'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
                                })
         return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
 
@@ -95,6 +103,6 @@ def search(request):
     for row in result:
         candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
                            'permit_required': True if row.id64 in perm_systems else False,
-                           'permit_name': permsystems.get(row.id64).permit_name or None if row.id64 in perm_systems else False
+                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
                            })
     return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
