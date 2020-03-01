@@ -41,8 +41,6 @@ def search(request):
         if int(request.params['limit']) > 200:
             return exc.HTTPBadRequest(detail="Limit too high (Over 200)")
         limit = int(request.params['limit'])
-    if len(name) < 3:
-        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
     permsystems = request.dbsession.query(Permits)
     perm_systems = []
     candidates = []
@@ -61,6 +59,8 @@ def search(request):
                            })
     if match.count() > 0:
         return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
+    if len(name) < 3:
+        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
 
     if searchtype == 'lev':
         result = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
