@@ -38,7 +38,7 @@ def search(request):
     if 'limit' not in request.params:
         limit = 20
     else:
-        if request.params['limit'] > 200:
+        if int(request.params['limit']) > 200:
             return exc.HTTPBadRequest(detail="Limit too high (Over 200)")
         limit = int(request.params['limit'])
     if len(name) < 3:
