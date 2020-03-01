@@ -5,17 +5,10 @@ from pyramid.view import (
 
 from sqlalchemy import text, func
 from ..models import System, PopulatedSystem, Permits
+from ..utils.util import checkpermitname
 import pyramid.httpexceptions as exc
 
 valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
-
-
-def checkpermitname(system, permsystems, perms):
-    if system not in perms:
-        return None
-    if permsystems.get(system).permit_name is not None:
-        return permsystems.get(system).permit_name
-    return None
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
@@ -47,7 +40,7 @@ def search(request):
     else:
         if request.params['limit'] > 200:
             return exc.HTTPBadRequest(detail="Limit too high (Over 200)")
-        limit = request.params['limit']
+        limit = int(request.params['limit'])
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
     permsystems = request.dbsession.query(Permits)

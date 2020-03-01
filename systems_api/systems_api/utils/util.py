@@ -43,3 +43,28 @@ def jenkins32(key):
   key ^= (key >> 12)
   return key
 
+
+def checkpermitname(system, permsystems, perms):
+    if system not in perms:
+        return None
+    if permsystems.get(system).permit_name is not None:
+        return permsystems.get(system).permit_name
+    return None
+
+
+def resultstocandidates(rows, has_similarity, permsystems, perm_systems):
+    candidates = []
+    if has_similarity:
+        for candidate in rows:
+            candidates.append({'name': candidate[0].name, 'distance': candidate[1],
+                               'id64': candidate[0].id64,
+                               'permit_required': True if candidate[0].id64 in perm_systems else False,
+                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
+                               })
+    else:
+        for candidate in rows:
+            candidates.append({'name': candidate.name, 'similarity': 1,
+                               'id64': candidate.id64,
+                               'permit_required': True if candidate.id64 in perm_systems else False,
+                               'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                               })
