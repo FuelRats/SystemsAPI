@@ -13,8 +13,4 @@ from ..utils import pgnames
 def procnames(request):
     if 'name' not in request.params:
         return exc.HTTPBadRequest(details='Missing name parameter')
-    name = request.params['name']
-    if pgnames.is_pg_system_name(name):
-        return {'is_pg_system': True}
-    else:
-        return {'is_pg_system': False}
+    return {'is_pg_system': pgnames.is_pg_system_name(request.params['name'])}
