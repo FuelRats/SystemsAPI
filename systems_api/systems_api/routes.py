@@ -6,3 +6,4 @@ def includeme(config):
     config.add_route('mecha', '/mecha')
     config.add_route('landmark', '/landmark')
     config.add_route('galaxy', '/galaxy')
+    config.add_route('procname', '/procname')
