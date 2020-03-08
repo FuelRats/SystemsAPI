@@ -5,14 +5,7 @@ from pyramid.view import (
 from sqlalchemy import text, func
 from ..models import System, Permits
 import pyramid.httpexceptions as exc
-
-
-def checkpermitname(system, permsystems, perms):
-    if system not in perms:
-        return None
-    if permsystems.get(system).permit_name is not None:
-        return permsystems.get(system).permit_name
-    return None
+from ..utils.util import checkpermitname, resultstocandidates
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
@@ -25,14 +18,15 @@ def mecha(request):
     """
     if 'name' not in request.params:
         return exc.HTTPBadRequest(detail="Missing 'name' parameter.")
+    name = request.params['name']
+    if len(name) < 3:
+        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
     candidates = []
     permsystems = request.dbsession.query(Permits)
     perm_systems = []
     for system in permsystems:
         perm_systems.append(system.id64)
-    name = request.params['name']
-    if len(name) < 3:
-        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+
     # Check for immediate match, case insensitive.
     query = request.dbsession.query(System).filter(System.name.ilike(name))
     for candidate in query:
@@ -47,6 +41,7 @@ def mecha(request):
     qtext = text("select *, levenshtein(name, :name) as lev from systems where dmetaphone(name) "
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
     query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
+    #TODO: Limit to a max lev distance for discarding ridiculously far away result.
     for candidate in query:
         print(candidate)
         candidates.append({'name': candidate[0].name, 'distance': candidate[1],

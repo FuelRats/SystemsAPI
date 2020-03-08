@@ -68,7 +68,7 @@ def search(request):
         for row in result:
             candidates.append({'name': row[0].name, 'similarity': row[1], 'id64': row[0].id64,
                                'permit_required': True if row[0].id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
+                               'permit_name': checkpermitname(row[0].id64, permsystems, perm_systems)
                                })
         return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
 
@@ -96,6 +96,6 @@ def search(request):
     for row in result:
         candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
                            'permit_required': True if row.id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                           'permit_name': checkpermitname(row.id64, permsystems, perm_systems)
                            })
     return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
