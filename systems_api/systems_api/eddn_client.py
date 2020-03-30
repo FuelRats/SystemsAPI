@@ -148,6 +148,14 @@ def main(argv=sys.argv):
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     starttime = time.time()
     lasthourly = time.time()
+    startot = session.query(func.count(Star.id64)).scalar()
+    systot = session.query(func.count(System.id64)).scalar()
+    bodytot = session.query(func.count(Body.id64)).scalar()
+    newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
+                     lastupdate=int(time.time()))
+    session.query(Stats).delete()
+    session.add(newstats)
+
     messages = 0
     syscount = 0
     starcount = 0
@@ -202,7 +210,7 @@ def main(argv=sys.argv):
                             systot = session.query(func.count(System.id64)).scalar()
                             bodytot = session.query(func.count(Body.id64)).scalar()
                             newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
-                                             lastupdate=time.time())
+                                             lastupdate=int(time.time()))
                             session.query(Stats).delete()
                             session.add(newstats)
                             try:
