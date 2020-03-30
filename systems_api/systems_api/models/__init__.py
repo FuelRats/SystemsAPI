@@ -5,6 +5,7 @@ import zope.sqlalchemy
 
 # import or define all models here to ensure they are attached to the
 # Base.metadata prior to any initialization routines
+
 from .mymodel import MyModel  # flake8: noqa
 from .star import Star
 from .body import Body
@@ -13,6 +14,7 @@ from .station import Station
 from .system import System
 from .permits import Permits
 from .landmark import Landmark
+from .stats import Stats
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup
