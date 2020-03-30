@@ -9,7 +9,6 @@ from . import util
 from . import vector3
 
 
-
 # #
 # Publicly-useful functions
 # #
@@ -353,8 +352,6 @@ _expected_fragment_limit = 4
 # #
 # Internal functions: shared/HA
 # #
-
-
 
 
 # Get a system's relative position within a sector

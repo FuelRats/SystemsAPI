@@ -28,7 +28,8 @@ from systems_api.models import (
 
 from systems_api.models.star import Star
 from systems_api.models.system import System
-
+from systems_api.models.stats import Stats
+from systems_api.models.body import Body
 
 __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
@@ -197,9 +198,16 @@ def main(argv=sys.argv):
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
+                            startot = session.query(func.count(Star.id64)).scalar()
+                            systot = session.query(func.count(System.id64)).scalar()
+                            bodytot = session.query(func.count(Body.id64)).scalar()
+                            newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
+                                             lastupdate=time.time())
+                            session.query(Stats).delete()
+                            session.add(newstats)
                             try:
                                 proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
-                                              f" {hmessages}, {totmsg-hmessages} ignored.")
+                                              f" {hmessages} messages, {totmsg-hmessages} ignored.")
                                 lasthourly = time.time()
                                 totmsg = 0
                                 hmessages = 0

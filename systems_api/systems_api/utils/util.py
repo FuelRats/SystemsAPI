@@ -1,5 +1,22 @@
 import numbers
 from . import vector3
+import pyramid.httpexceptions as exc
+
+
+def check_params(paramlist, request):
+    """
+    Checks whether a request contains the required parameters for an endpoint, returns a HTTPException
+    if it doesn't.
+    :param paramlist: A list of parameters to check that /at least one/ of is present.
+    :param request: The Pyramid request object
+    :return: True if param(s) are set, or a HTTPException.
+    """
+    for param in paramlist:
+        if param in request['params']:
+            return True
+        else:
+            continue
+    return exc.HTTPBadRequest()
 
 
 def get_as_position(v):
@@ -29,19 +46,19 @@ def is_str(s):
 # 32-bit hashing algorithm found at http://papa.bretmulvey.com/post/124027987928/hash-functions
 # Seemingly originally by Bob Jenkins <bob_jenkins-at-burtleburtle.net> in the 1990s
 def jenkins32(key):
-  key += (key << 12)
-  key &= 0xFFFFFFFF
-  key ^= (key >> 22)
-  key += (key << 4)
-  key &= 0xFFFFFFFF
-  key ^= (key >> 9)
-  key += (key << 10)
-  key &= 0xFFFFFFFF
-  key ^= (key >> 2)
-  key += (key << 7)
-  key &= 0xFFFFFFFF
-  key ^= (key >> 12)
-  return key
+    key += (key << 12)
+    key &= 0xFFFFFFFF
+    key ^= (key >> 22)
+    key += (key << 4)
+    key &= 0xFFFFFFFF
+    key ^= (key >> 9)
+    key += (key << 10)
+    key &= 0xFFFFFFFF
+    key ^= (key >> 2)
+    key += (key << 7)
+    key &= 0xFFFFFFFF
+    key ^= (key >> 12)
+    return key
 
 
 def checkpermitname(system, permsystems, perms):

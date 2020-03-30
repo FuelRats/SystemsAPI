@@ -1,3 +1,12 @@
+1.0.2
+---
+Add statistics for database, updated hourly through eddn_client.
+
+1.0.1
+---
+Implement Semver versioning and reporting from this point forward.
+
+
 1.0a
 ---
 

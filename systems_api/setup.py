@@ -39,7 +39,7 @@ tests_require = [
 
 setup(
     name='systems_api',
-    version='1.0a',
+    version='1.0.2',
     description='Systems API',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
@@ -51,7 +51,7 @@ setup(
     author='Absolver (Kenneth Aalberg)',
     author_email='absolver@fuelrats.com',
     url='https://github.com/Fuelrats/',
-    keywords='web pyramid pylons',
+    keywords='web pyramid pylons api jsonapi fuelrats',
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
