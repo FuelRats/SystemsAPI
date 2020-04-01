@@ -38,7 +38,7 @@ def mecha(request):
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try soundex and dmetaphone matches on the name, look for low levenshtein distances.
-    qtext = text("select *, levenshtein(name, :name) as lev from systems where dmetaphone(name) "
+    qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where dmetaphone(name) "
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
     query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
     #TODO: Limit to a max lev distance for discarding ridiculously far away result.
