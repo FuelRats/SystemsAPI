@@ -236,7 +236,8 @@ def main(argv=sys.argv):
                             if not res:
                                 syscount = syscount + 1
                                 newsys = System(id64=data['SystemAddress'], name=data['StarSystem'],
-                                                coords=data['StarPos'], date=data['timestamp'])
+                                                coords={'x': data['StarPos'][0], 'y': data['StarPos'][1],
+                                                        'z': data['StarPos'][2]}, date=data['timestamp'])
                                 try:
                                     session.add(newsys)
                                     transaction.commit()
