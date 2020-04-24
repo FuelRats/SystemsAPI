@@ -7,6 +7,7 @@ import time
 import os
 import semver
 import re
+import asyncio
 
 from xmlrpc.client import ServerProxy, ProtocolError
 
@@ -118,6 +119,21 @@ def validsoftware(name, version):
     return True
 
 
+async def update_stats(session, future):
+    startot = session.query(func.count(Star.id64)).scalar()
+    systot = session.query(func.count(System.id64)).scalar()
+    bodytot = session.query(func.count(Body.id64)).scalar()
+    newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
+                     lastupdate=int(time.time()))
+    session.query(Stats).delete()
+    session.add(newstats)
+    future.set_result('System statistics updated.')
+
+
+def update_complete(future):
+    print(future.result)
+
+
 def usage(argv):
     cmd = os.path.basename(argv[0])
     print('usage: %s <config_uri> [var=value]\n'
@@ -148,13 +164,14 @@ def main(argv=sys.argv):
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     starttime = time.time()
     lasthourly = time.time()
-    startot = session.query(func.count(Star.id64)).scalar()
-    systot = session.query(func.count(System.id64)).scalar()
-    bodytot = session.query(func.count(Body.id64)).scalar()
-    newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
-                     lastupdate=int(time.time()))
-    session.query(Stats).delete()
-    session.add(newstats)
+    loop = asyncio.get_event_loop()
+    future = asyncio.Future()
+    asyncio.ensure_future(update_stats(session, future))
+    future.add_done_callback(update_complete)
+    try:
+        loop.run_until_complete(future)
+    finally:
+        loop.close()
 
     messages = 0
     syscount = 0
@@ -206,13 +223,7 @@ def main(argv=sys.argv):
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
-                            startot = session.query(func.count(Star.id64)).scalar()
-                            systot = session.query(func.count(System.id64)).scalar()
-                            bodytot = session.query(func.count(Body.id64)).scalar()
-                            newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
-                                             lastupdate=int(time.time()))
-                            session.query(Stats).delete()
-                            session.add(newstats)
+                            asyncio.run_until_complete(update_stats())
                             try:
                                 proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
                                               f" {hmessages} messages, {totmsg-hmessages} ignored.")
