@@ -31,6 +31,7 @@ from systems_api.models.star import Star
 from systems_api.models.system import System
 from systems_api.models.stats import Stats
 from systems_api.models.body import Body
+from systems_api.models.carrier import Carrier
 
 __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
@@ -223,24 +224,56 @@ def main(argv=sys.argv):
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
-                            asyncio.run_until_complete(update_stats())
+                            loop = asyncio.get_event_loop()
+                            future = asyncio.Future()
+                            asyncio.ensure_future(update_stats(session, future))
+                            future.add_done_callback(update_complete)
                             try:
+                                loop.run_until_complete(future)
                                 proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
                                               f" {hmessages} messages, {totmsg-hmessages} ignored.")
                                 lasthourly = time.time()
                                 totmsg = 0
                                 hmessages = 0
-
                             except TimeoutError:
                                 print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
                                 lasthourly = lasthourly + 60
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 lasthourly = time.time()
+                            finally:
+                                loop.close()
+
 
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
+                        if data['event'] == 'Docked' and data['StationType'] == 'FleetCarrier':
+                            print("Adding carrier...")
+                            try:
+                                oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
+                                if oldcarrier:
+                                    oldcarrier.update(marketId = data['marketID'], systemName = data['StarSystem'],
+                                                      systemId64 = data['SystemAddress'],
+                                                      haveShipyard=True if 'shipyard' in data['StationServices'] else False,
+                                                      haveOutfitting=True if 'outfitting' in data['StationServices'] else False,
+                                                      haveMarket=True if 'commodities' in data['StationServices'] else False,
+                                                      updateTime=data['timestamp']
+                                                      )
+                                else:
+                                    newcarrier = Carrier(callsign=data['StationName'], marketId=data['marketID'], name=data['StationName'],
+                                                     systemName=data['StarSystem'], systemId64=data['SystemAddress'],
+                                                     haveShipyard=True if 'shipyard' in data['StationServices'] else False,
+                                                     haveOutfitting=True if 'outfitting' in data['StationServices'] else False,
+                                                     haveMarket=True if 'commodities' in data['StationServices'] else False,
+                                                     updateTime=data['timestamp']
+                                                     )
+                                    session.add(newcarrier)
+                                transaction.commit()
+                            except DataError:
+                                print("Failed to add a carrier! Invalid data passed")
+                                transaction.abort()
+                        # TODO: Handle other detail Carrier events, such as Jump and Stats.
                         if data['event'] == 'FSDJump':
                             id64 = data['SystemAddress']
                             res = session.query(System.id64).filter(System.id64 == id64).scalar() or False
