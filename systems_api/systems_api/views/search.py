@@ -61,7 +61,7 @@ def search(request):
                            'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                            })
     if match.count() > 0:
-        return {'meta': {'name': candidates[0].name, 'type': 'Perfect match'}, 'data': candidates}
+        return {'meta': {'name': candidate[0].name, 'type': 'Perfect match'}, 'data': candidates}
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
 
