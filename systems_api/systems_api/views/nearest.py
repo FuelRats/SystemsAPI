@@ -84,6 +84,8 @@ def nearest_scoopable(request):
         except MultipleResultsFound:
             return exc.HTTPServerError('Multiple rows matching system ID found. This should not happen.')
     elif 'name' in request.params:
+        if len(request.params['name'] < 3):
+            return exc.HTTPBadRequest('Search term too short (Minimum 3 characters)')
         try:
             system = request.dbsession.query(System).filter(System.name.ilike(request.params['name'])).one()
             x, y, z = system.coords['x'], system.coords['y'], system.coords['z']
