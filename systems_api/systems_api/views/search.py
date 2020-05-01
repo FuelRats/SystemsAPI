@@ -41,6 +41,9 @@ def search(request):
         if int(request.params['limit']) > 200:
             return exc.HTTPBadRequest(detail="Limit too high (Over 200)")
         limit = int(request.params['limit'])
+    if len('name') < 3:
+        return exc.HTTPBadRequest(detail="Name too short.")
+
     permsystems = request.dbsession.query(Permits)
     perm_systems = []
     candidates = []

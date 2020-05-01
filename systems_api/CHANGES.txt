@@ -1,3 +1,10 @@
+1.0.3
+---
+Add nearest_scoopable and nearest_populated endpoints.
+Fix bad data injection in eddn client.
+Use psycopg2-binary.
+Prevent short names from hogging the API with too short names. (Does not apply to JSONAPI endpoints)
+
 1.0.2
 ---
 Add statistics for database, updated hourly through eddn_client.
