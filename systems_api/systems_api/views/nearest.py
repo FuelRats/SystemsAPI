@@ -64,7 +64,7 @@ def nearest_scoopable(request):
             candidates = request.dbsession.query(System). \
                 filter(and_(System.coords['x'].as_float().between((x - cube), (x + cube)),
                             System.coords['y'].as_float().between((y - cube), (y + cube)),
-                            System.coords['z'].as_float().between((z - cube), (z + cube)))).join(Star).all()
+                            System.coords['z'].as_float().between((z - cube), (z + cube)))).join(Star).limit(50).all()
             results = []
             for candidate in candidates:
                 for star in candidate.stars:
