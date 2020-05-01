@@ -29,6 +29,7 @@ requires = [
     'semver',
     'colander',
     'deform',
+    'numpy',
 ]
 
 tests_require = [

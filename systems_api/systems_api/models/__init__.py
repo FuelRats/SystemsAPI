@@ -15,6 +15,7 @@ from .system import System
 from .permits import Permits
 from .landmark import Landmark
 from .stats import Stats
+from .carrier import Carrier
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup
