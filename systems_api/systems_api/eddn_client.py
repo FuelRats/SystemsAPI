@@ -18,7 +18,7 @@ from pyramid.paster import (
 
 from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DataError, IntegrityError
 
 from systems_api.models import (
     get_engine,
@@ -318,12 +318,16 @@ def main(argv=sys.argv):
                                                    surfaceTemperature=data['SurfaceTemperature'],
                                                    isScoopable=True if data['StarType'] in __scoopable else False,
                                                    isMainStar=True if data['BodyID'] == 0 else False,
-                                                   updateTime=data['timestamp'])
+                                                   updateTime=data['timestamp'],
+                                                   systemId64=data['SystemAddress'])
                                     try:
                                         session.add(newstar)
                                         transaction.commit()
                                     except DataError:
                                         print("Failed to add star - Data Error!")
+                                        transaction.abort()
+                                    except IntegrityError:
+                                        print("Failed to add star - no parent system!")
                                         transaction.abort()
                 sys.stdout.flush()
 
