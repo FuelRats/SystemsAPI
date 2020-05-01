@@ -199,7 +199,7 @@ def main(argv=sys.argv):
                 print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}\r", end='')
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion'])\
                         and __json['$schemaRef'] in __allowedSchema:
-
+                    hmessages = hmessages + 1
                     if proxy:
                         if time.time() > (starttime + 3600 * 24):
                             try:
@@ -221,7 +221,8 @@ def main(argv=sys.argv):
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
-                        if time.time() > (lasthourly + 3600):
+                        if time.time() > (lasthourly + 60):
+                            print("Running stats update...")
                             loop = asyncio.get_event_loop()
                             future = asyncio.Future()
                             asyncio.ensure_future(update_stats(session, future))
@@ -231,16 +232,14 @@ def main(argv=sys.argv):
                                 proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
                                               f" {hmessages} messages, {totmsg-hmessages} ignored.")
                                 lasthourly = time.time()
-                                totmsg = 0
                                 hmessages = 0
+                                totmsg = 0
                             except TimeoutError:
                                 print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
                                 lasthourly = lasthourly + 60
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 lasthourly = time.time()
-                            finally:
-                                loop.close()
 
 
                     data = __json['message']

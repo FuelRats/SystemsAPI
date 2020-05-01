@@ -26,7 +26,6 @@ def nearest_populated(request):
         try:
             system = request.dbsession.query(System).filter(System.id64 == request.params['systemid64']).one()
             x, y, z = system.coords['x'], system.coords['y'], system.coords['z']
-            print(f"X: {x} Y: {y} Z: {z}")
         except NoResultFound:
             return exc.HTTPBadRequest('SystemID64 not found.')
         except MultipleResultsFound:
@@ -37,7 +36,6 @@ def nearest_populated(request):
             return exc.HTTPBadRequest('Name too short. (Must be at least 3 characters)')
         try:
             system = request.dbsession.query(System).filter(System.name.ilike(request.params['name'])).one()
-            print(f"System {system.name} id {system.id64} at {system.coords}")
             x, y, z = system.coords['x'], system.coords['y'], system.coords['z']
         except NoResultFound:
             return exc.HTTPBadRequest('System not found.')
@@ -106,14 +104,11 @@ def nearest_scoopable(request):
         filter(and_(System.coords['x'].as_float().between((x - cube), (x + cube)),
                     System.coords['y'].as_float().between((y - cube), (y + cube)),
                     System.coords['z'].as_float().between((z - cube), (z + cube)))).join(Star).limit(50000).all()
-    candidates.append(system)  # Evaluate ourselves as a candidate too, since users can be stupid.
     results = []
     for candidate in candidates:
         for star in candidate.stars:
             try:
                 if star.isScoopable is True:
-                    if candidate.name == system.name:
-                        print(f"Checking star {star.name}: {star.isScoopable}")
                     a = numpy.array((x, y, z))
                     b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
                     dist = numpy.linalg.norm(a - b)
