@@ -221,7 +221,7 @@ def main(argv=sys.argv):
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
-                        if time.time() > (lasthourly + 60):
+                        if time.time() > (lasthourly + 3600):
                             print("Running stats update...")
                             loop = asyncio.get_event_loop()
                             future = asyncio.Future()
