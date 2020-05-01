@@ -120,6 +120,12 @@ def validsoftware(name, version):
     return True
 
 
+def get_count(q):
+    count_q = q.statement.with_only_columns([func.count()]).order_by(None)
+    count = q.session.execute(count_q).scalar()
+    return count
+
+
 async def update_stats(session, future):
     startot = session.query(func.count(Star.id64)).scalar()
     systot = session.query(func.count(System.id64)).scalar()
@@ -164,15 +170,7 @@ def main(argv=sys.argv):
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     starttime = time.time()
-    lasthourly = time.time()
-    loop = asyncio.get_event_loop()
-    future = asyncio.Future()
-    asyncio.ensure_future(update_stats(session, future))
-    future.add_done_callback(update_complete)
-    try:
-        loop.run_until_complete(future)
-    finally:
-        loop.close()
+    lasthourly = time.time() - 3700  # Ensure we start by running the hourly once.
 
     messages = 0
     syscount = 0
