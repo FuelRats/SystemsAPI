@@ -95,27 +95,27 @@ def nearest_scoopable(request):
         return exc.HTTPBadRequest('Missing required parameter (name or systemid64)')
 
     for star in request.dbsession.query(Star).filter(Star.systemId64 == system.id64):
-        print(f"Evaluating {star.name}: {star.isScoopable}")
         if star.isScoopable:
             # Silly wabbit, you are scoopable.
             return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
                     'data': {'distance': 0.0, 'name': system.name, 'id64': system.id64}}
-    candidates = request.dbsession.query(System). \
-        filter(and_(System.coords['x'].as_float().between((x - cube), (x + cube)),
-                    System.coords['y'].as_float().between((y - cube), (y + cube)),
-                    System.coords['z'].as_float().between((z - cube), (z + cube)))).join(Star).limit(500).all()
-    results = []
-    for candidate in candidates:
-        for star in candidate.stars:
-            try:
-                if star.isScoopable is True:
-                    a = numpy.array((x, y, z))
-                    b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
-                    dist = numpy.linalg.norm(a - b)
-                    results.append((candidate, dist))
-            except ValueError:
-                print(
-                    f"Value error: Failed for {candidate.coords['x']}, {candidate.coords['y']}, {candidate.coords['z']}")
-    res = sorted(results, key=lambda cand: cand[1])
-    return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
-            'data': {'distance': res[0][1], 'name': res[0][0].name, 'id64': res[0][0].id64}}
+    try:
+        candidate = request.dbsession.query(System).from_statement(
+            text(f"SELECT *, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
+                 f")^2 + (cast(systems.coords->>'y' AS FLOAT) - {y}"
+                 f")^2 + (cast(systems.coords->>'z' AS FLOAT) - {z}"
+                 f")^2)) as Distance from systems JOIN stars ON systems.id64 = stars.\"systemId64\" "
+                 f"where cast(systems.coords->>'x' AS FLOAT) BETWEEN {str(float(x)-cube)} AND {str(float(x)+cube)}"
+                 f" AND cast(systems.coords->>'y' AS FLOAT) BETWEEN {str(float(y)-cube)} AND {str(float(y)+cube)} AND cast(systems.coords->>'z' as FLOAT)"
+                 f" BETWEEN {str(float(z)-cube)} AND {str(float(z)+cube)} order by Distance LIMIT 1")).one()
+        a = numpy.array((x, y, z))
+        b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
+        dist = numpy.linalg.norm(a - b)
+
+        return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
+                'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64}}
+    except NoResultFound:
+        return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
+                'error': 'No scoopable systems found.'}
+    except MultipleResultsFound:
+        return exc.HTTPServerError('Multiple results from a query that should return only one hit. This is Wrong.')
