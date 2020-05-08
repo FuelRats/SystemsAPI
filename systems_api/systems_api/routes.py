@@ -9,3 +9,4 @@ def includeme(config):
     config.add_route('procname', '/procname')
     config.add_route('nearest_populated', '/nearest_populated')
     config.add_route('nearest_scoopable', '/nearest_scoopable')
+    config.add_route('heatmap', '/heatmap')
