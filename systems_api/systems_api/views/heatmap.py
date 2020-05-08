@@ -18,7 +18,7 @@ def heatmap(request):
         cur = conn.cursor()
         cur.execute('SELECT system as "System", COUNT(system) as "Rescues" FROM "Rescues" WHERE '
                     '"deletedAt" IS NULL and position(\': false\' in "data"::json#>>\'{markedForDeletion}\')>0 '
-                    'GROUP BY system ORDER BY count("system") DESC')
+                    'GROUP BY system ORDER BY count("system") DESC LIMIT 1000')
         rows = cur.fetchall()
         heatmap = []
         for row in rows:
