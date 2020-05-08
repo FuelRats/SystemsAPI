@@ -23,7 +23,7 @@ def heatmap(request):
         heatmap = []
         for row in rows:
             # Fetch me some system data!
-            res = request.dbsession.query(System).filter(System.name == row[0]).one_or_none()
+            res = request.dbsession.query(System).filter(System.name == row[0]).first()
             if not res:
                 continue
             coords = res.coords
