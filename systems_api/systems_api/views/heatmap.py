@@ -42,8 +42,11 @@ def generate_heatmap(request):
 @view_config(route_name='heatmap', renderer='json')
 def heatmap(request):
     if os.path.isfile(f'heatmap.json'):
-        if datetime.fromtimestamp(os.path.getmtime(f'heatmap.json')) > datetime.today() - timedelta(
+        print("File found.")
+        if datetime.fromtimestamp(os.path.getmtime(f'heatmap.json')) > datetime.today() + timedelta(
                 days=1):
+            print(f"Timestamp: {datetime.fromtimestamp(os.path.getmtime(f'heatmap.json'))}")
+            print(f"Delta: {datetime.today() - timedelta(days=2)}")
             print("Generating new heatmap...")
             generate_heatmap(request)
         else:
