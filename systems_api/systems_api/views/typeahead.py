@@ -25,7 +25,6 @@ def search(request):
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Max-Age': '1728000',
     })
-    print("THIS TEAPOT BETTER FUCKING SHOW UP IN CONSOLE!")
     if 'term' in request.params:
         name = request.params['term'].upper()
     else:
@@ -37,6 +36,4 @@ def search(request):
         candidates = []
         for row in result:
             candidates.append(row.name)
-        response = Response(content_type='application/json')
-        response.text = json.dumps(candidates)
-        return response
+        return candidates
