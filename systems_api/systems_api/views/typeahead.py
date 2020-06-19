@@ -37,4 +37,6 @@ def search(request):
         candidates = []
         for row in result:
             candidates.append(row.name)
-        return json.dumps(candidates)
+        response = Response(content_type='application/json')
+        response.text = json.dumps(candidates)
+        return response
