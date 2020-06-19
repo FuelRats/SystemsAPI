@@ -103,9 +103,14 @@ def search(request):
     if not result:
         # We haven't gotten a ORM result yet, execute manual SQL.
         result = request.dbsession.execute(sql)
-    for row in result:
-        candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
-                           'permit_required': True if row.id64 in perm_systems else False,
-                           'permit_name': checkpermitname(row.id64, permsystems, perm_systems)
-                           })
-    return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
+    if xhr:
+        for row in result:
+            candidates.append({row['name']})
+        return candidates
+    else:
+        for row in result:
+            candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id64': row['id64'],
+                               'permit_required': True if row.id64 in perm_systems else False,
+                               'permit_name': checkpermitname(row.id64, permsystems, perm_systems)
+                               })
+        return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
