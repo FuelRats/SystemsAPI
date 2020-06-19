@@ -28,6 +28,13 @@ def search(request):
         searchtype = 'lev'
     if 'term' in request.params:
         xhr = True
+        request.response.headers.update({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST,GET,DELETE,PUT,OPTIONS',
+            'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '1728000',
+        })
         name = request.params['term'].upper()
         searchtype = "lev"
     else:
