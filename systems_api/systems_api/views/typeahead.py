@@ -18,7 +18,13 @@ def search(request):
     :param request: The Pyramid request object
     :return: A JSON response
     """
-
+    request.response.headers.update({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST,GET,DELETE,PUT,OPTIONS',
+        'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '1728000',
+    })
     if 'term' in request.params:
         name = request.params['term'].upper()
     else:
