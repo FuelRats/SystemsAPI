@@ -6,6 +6,7 @@ from sqlalchemy import text
 from ..models import Landmark, System
 from pyramid.httpexceptions import HTTPBadRequest
 
+
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='landmark', renderer='json')
 def landmark(request):

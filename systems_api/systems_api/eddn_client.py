@@ -245,8 +245,7 @@ def main(argv=sys.argv):
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
-                        if data['event'] == 'Docked' and data['StationType'] == 'FleetCarrier':
-                            print("Adding carrier...")
+                        if data['event'] in {'Docked', 'CarrierJump'} and data['StationType'] == 'FleetCarrier':
                             try:
                                 oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
                                 if oldcarrier:
@@ -267,10 +266,13 @@ def main(argv=sys.argv):
                                                      )
                                     session.add(newcarrier)
                                 transaction.commit()
-                            except DataError:
-                                print("Failed to add a carrier! Invalid data passed")
+                            except DataError as e:
+                                print(f"Failed to add a carrier! Invalid data passed: {e}")
                                 transaction.abort()
-                        # TODO: Handle other detail Carrier events, such as Jump and Stats.
+                            except KeyError as e:
+                                print(f"Invalid key in carrier data: {e}")
+                                transaction.abort()
+                        # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
                             id64 = data['SystemAddress']
                             res = session.query(System.id64).filter(System.id64 == id64).scalar() or False
