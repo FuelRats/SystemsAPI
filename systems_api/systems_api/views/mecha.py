@@ -44,11 +44,12 @@ def mecha(request):
     #TODO: Limit to a max lev distance for discarding ridiculously far away result.
     for candidate in query:
         print(candidate)
-        candidates.append({'name': candidate[0].name, 'distance': candidate[1],
-                           'id64': candidate[0].id64,
-                           'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                           })
+        if candidate[1] < 5:
+            candidates.append({'name': candidate[0].name, 'distance': candidate[1],
+                               'id64': candidate[0].id64,
+                               'permit_required': True if candidate[0].id64 in perm_systems else False,
+                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
+                               })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
     # Try an ILIKE with wildcard on end. Slower.
