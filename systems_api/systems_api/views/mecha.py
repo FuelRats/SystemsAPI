@@ -54,7 +54,7 @@ def mecha(request):
         return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
     # Try an ILIKE with wildcard on end. Slower.
     query = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-        filter(System.name.ilike(name+"%")).limit(10).from_self().order_by(func.similarity(System.name, name).desc())
+        filter(System.name.ilike(name+"%")).limit(500).from_self().order_by(func.similarity(System.name, name).desc())
     for candidate in query:
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
                            'id64': candidate[0].id64,
@@ -65,7 +65,7 @@ def mecha(request):
         return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
     # Try a GIN trigram similarity search on the entire database. Slow as hell.
     pmatch = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')). \
-        filter(System.name % name).limit(10).from_self().order_by(func.similarity(System.name, name).desc())
+        filter(System.name % name).limit(500).from_self().order_by(func.similarity(System.name, name).desc())
     if pmatch.count() > 0:
         for candidate in pmatch:
             # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
