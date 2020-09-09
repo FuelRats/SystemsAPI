@@ -40,8 +40,8 @@ def mecha(request):
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     if is_pg_system_name(name):
         # If the system is a PGName, don't try soundex and dmeta first, as they are most likely to fail.
-        qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where name % :name"
-                     " ORDER BY lev LIMIT 10")
+        qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
+                     " ORDER BY lev DESC LIMIT 10")
         pmatch = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
         for candidate in pmatch:
             # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
@@ -83,8 +83,8 @@ def mecha(request):
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
     # Try a GIN trigram similarity search on the entire database. Slow as hell.
-    qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where name % :name"
-                 " ORDER BY lev LIMIT 10")
+    qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
+                 " ORDER BY lev DESC LIMIT 10")
     pmatch = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
     if pmatch.count() > 0:
         for candidate in pmatch:
