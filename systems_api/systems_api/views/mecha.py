@@ -38,6 +38,9 @@ def mecha(request):
                            })
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+    if 'fast' in request.params:
+        return {'meta': {'error': 'System not found. Query again without fast flag for in-depth search.',
+                         'type': 'notfound'}}
     if is_pg_system_name(name):
         # If the system is a PGName, don't try soundex and dmeta first, as they are most likely to fail.
         qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
@@ -58,7 +61,6 @@ def mecha(request):
     qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where dmetaphone(name) "
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
     query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
-    #TODO: Limit to a max lev distance for discarding ridiculously far away result.
     for candidate in query:
         print(candidate)
         if candidate[1] < 5:
