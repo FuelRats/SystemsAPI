@@ -7,6 +7,7 @@ from sqlalchemy import text, func
 from ..models import System, PopulatedSystem, Permits
 from ..utils.util import checkpermitname
 import pyramid.httpexceptions as exc
+from urllib.parse import unquote
 
 valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
 
@@ -35,13 +36,13 @@ def search(request):
             'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Max-Age': '1728000',
         })
-        name = request.params['term'].upper()
+        name = unquote(request.params['term']).upper()
         searchtype = "lev"
     else:
         xhr = False
         if 'name' not in request.params:
             return exc.HTTPBadRequest(detail="No name in search request.")
-        name = request.params['name']
+        name = unquote(request.params['name'])
     if 'limit' not in request.params:
         limit = 20
     else:

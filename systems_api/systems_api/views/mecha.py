@@ -7,7 +7,7 @@ from ..models import System, Permits
 import pyramid.httpexceptions as exc
 from ..utils.util import checkpermitname, resultstocandidates
 from ..utils.pgnames import is_pg_system_name
-
+from urllib.parse import unquote
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='mecha', renderer='json')
@@ -19,7 +19,7 @@ def mecha(request):
     """
     if 'name' not in request.params:
         return exc.HTTPBadRequest(detail="Missing 'name' parameter.")
-    name = request.params['name']
+    name = unquote(request.params['name'])
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
     candidates = []
@@ -63,7 +63,7 @@ def mecha(request):
     query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
     for candidate in query:
         print(candidate)
-        if candidate[1] < 5:
+        if candidate[1] < 3:
             candidates.append({'name': candidate[0].name, 'distance': candidate[1],
                                'id64': candidate[0].id64,
                                'permit_required': True if candidate[0].id64 in perm_systems else False,
