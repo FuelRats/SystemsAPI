@@ -101,8 +101,10 @@ def mecha(request):
                     break
     except TypeError:
         # pmatch.count() isn't set, this is bad.
-        return {'meta': {'name': name, 'error': 'No hits.'}}
+        return {'meta': {'error': 'System not found.',
+            'type': 'no_dbrows'}}
     if len(candidates) < 1:
         # We ain't got shit. Give up.
-        return {'meta': {'name': name, 'error': 'No hits.'}}
+        return {'meta': {'error': 'System not found.',
+            'type': 'notfound'}}
     return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': candidates}
