@@ -88,16 +88,20 @@ def mecha(request):
     qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
                  " ORDER BY lev DESC LIMIT 10")
     pmatch = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
-    if pmatch.count() > 0:
-        for candidate in pmatch:
-            # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
-            candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                               'id64': candidate[0].id64,
-                               'permit_required': True if candidate[0].id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                               })
-            if len(candidates) > 10:
-                break
+    try:
+        if pmatch.count() > 0:
+            for candidate in pmatch:
+                # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
+                candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
+                                   'id64': candidate[0].id64,
+                                   'permit_required': True if candidate[0].id64 in perm_systems else False,
+                                   'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
+                                   })
+                if len(candidates) > 10:
+                    break
+    except TypeError:
+        # pmatch.count() isn't set, this is bad.
+        return {'meta': {'name': name, 'error': 'No hits.'}}
     if len(candidates) < 1:
         # We ain't got shit. Give up.
         return {'meta': {'name': name, 'error': 'No hits.'}}
