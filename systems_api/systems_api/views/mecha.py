@@ -8,6 +8,12 @@ import pyramid.httpexceptions as exc
 from ..utils.util import checkpermitname, resultstocandidates
 from ..utils.pgnames import is_pg_system_name
 from urllib.parse import unquote
+import re
+
+pg_system_regex_str = r"^(?P<l1>[A-Za-z])(?P<l2>[A-Za-z])-(?P<l3>[A-Za-z]) (?P<mcode>[A-Za-z])(?:(?P<n1>\d+)-)?(?P<n2>\d+)"
+pg_system_search_regex = re.compile(pg_system_regex_str)
+pg_system_regex = re.compile(r"^" + pg_system_regex_str + r"$")
+
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='mecha', renderer='json')
@@ -22,6 +28,11 @@ def mecha(request):
     name = unquote(request.params['name'])
     if len(name) < 3:
         return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+    # Prevent SAPI from choking on a search that contains just a PG sector's mass code.
+    m = pg_system_regex.match(name.strip())
+    if m:
+        return {'meta': {'error': 'Incomplete PG system name.',
+            'type': 'incomplete_name'}}
     candidates = []
     permsystems = request.dbsession.query(Permits)
     perm_systems = []
