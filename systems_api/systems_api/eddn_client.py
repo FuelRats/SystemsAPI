@@ -195,6 +195,7 @@ def main(argv=None):
     messages = 0
     syscount = 0
     starcount = 0
+    failstar = 0
     totmsg = 0
     hmessages = 0
     if proxy:
@@ -218,7 +219,8 @@ def main(argv=None):
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
                 totmsg = totmsg + 1
-                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}\r",
+                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10} "
+                      f"Missing systems: {failstar:10}\r",
                       end='')
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion']) \
                         and __json['$schemaRef'] in __allowedSchema:
@@ -237,6 +239,7 @@ def main(argv=None):
                                 messages = 0
                                 syscount = 0
                                 starcount = 0
+                                failstar = 0
                                 starttime = time.time()
                             except TimeoutError:
                                 print("XMLRPC call failed due to timeout, retrying in 320 seconds.")
@@ -259,8 +262,8 @@ def main(argv=None):
                                 hmessages = 0
                                 totmsg = 0
                             except TimeoutError:
-                                print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
-                                lasthourly = lasthourly + 60
+                                print("XMLRPC call failed due to timeout, retrying in one hour.")
+                                lasthourly = time.time() + 3600
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 lasthourly = time.time()
@@ -360,7 +363,7 @@ def main(argv=None):
                                         print("Failed to add star - Data Error!")
                                         transaction.abort()
                                     except IntegrityError:
-                                        print("Failed to add star - no parent system!")
+                                        failstar = failstar + 1
                                         transaction.abort()
                 sys.stdout.flush()
 
