@@ -14,7 +14,7 @@ from xmlrpc.client import ServerProxy, ProtocolError
 from pyramid.paster import (
     get_appsettings,
     setup_logging,
-    )
+)
 
 from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
@@ -24,8 +24,7 @@ from systems_api.models import (
     get_engine,
     get_session_factory,
     get_tm_session,
-    )
-
+)
 
 from systems_api.models.star import Star
 from systems_api.models.system import System
@@ -92,6 +91,12 @@ def coerce(version):
 
 
 def validsoftware(name, version):
+    """
+    Checks whether a EDDN actor is on our valid software list, and isn't a blocked version.
+    :param name: Software name
+    :param version: Version number
+    :return:
+    """
     if not name:
         return False
     if not version:
@@ -127,6 +132,11 @@ def get_count(q):
 
 
 async def update_stats(session, future):
+    """
+    Updates system statistics for /stats endpoint
+    :param session: The DBSession
+    :param future: Async future
+    """
     startot = session.query(func.count(Star.id64)).scalar()
     systot = session.query(func.count(System.id64)).scalar()
     bodytot = session.query(func.count(Body.id64)).scalar()
@@ -138,17 +148,27 @@ async def update_stats(session, future):
 
 
 def update_complete(future):
+    """
+    Callback for completed stats update
+    :param future: Async future
+    """
     print(future.result)
 
 
 def usage(argv):
+    """
+    Prints usage helpstring.
+    :param argv: Args passed from system
+    """
     cmd = os.path.basename(argv[0])
     print('usage: %s <config_uri> [var=value]\n'
           '(example: "%s development.ini")' % (cmd, cmd))
     sys.exit(1)
 
 
-def main(argv=sys.argv):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     if len(argv) < 2:
         usage(argv)
     proxy = None
@@ -176,7 +196,7 @@ def main(argv=sys.argv):
     syscount = 0
     starcount = 0
     totmsg = 0
-    hmessages= 0
+    hmessages = 0
     if proxy:
         try:
             proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
@@ -198,8 +218,9 @@ def main(argv=sys.argv):
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
                 totmsg = totmsg + 1
-                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}\r", end='')
-                if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion'])\
+                print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10}\r",
+                      end='')
+                if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion']) \
                         and __json['$schemaRef'] in __allowedSchema:
                     hmessages = hmessages + 1
                     if proxy:
@@ -218,8 +239,8 @@ def main(argv=sys.argv):
                                 starcount = 0
                                 starttime = time.time()
                             except TimeoutError:
-                                print("XMLRPC call failed due to timeout, retrying in 60 seconds.")
-                                starttime = starttime + 60
+                                print("XMLRPC call failed due to timeout, retrying in 320 seconds.")
+                                starttime = starttime + 320
                             except ProtocolError as e:
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
@@ -231,8 +252,9 @@ def main(argv=sys.argv):
                             future.add_done_callback(update_complete)
                             try:
                                 loop.run_until_complete(future)
-                                proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] Hourly report:"
-                                              f" {hmessages} messages, {totmsg-hmessages} ignored.")
+                                proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] "
+                                                                      f"Hourly report: {hmessages} messages, "
+                                                                      f"{totmsg - hmessages} ignored.")
                                 lasthourly = time.time()
                                 hmessages = 0
                                 totmsg = 0
@@ -243,7 +265,6 @@ def main(argv=sys.argv):
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 lasthourly = time.time()
 
-
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
@@ -252,21 +273,28 @@ def main(argv=sys.argv):
                                 oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
                                 # Consistency?! What's that? Bah.
                                 if oldcarrier:
-                                    oldcarrier.update(marketId = data['marketID'], systemName = data['StarSystem'],
-                                                      systemId64 = data['SystemAddress'],
-                                                      haveShipyard=True if 'shipyard' in data['StationServices'] else False,
-                                                      haveOutfitting=True if 'outfitting' in data['StationServices'] else False,
-                                                      haveMarket=True if 'commodities' in data['StationServices'] else False,
-                                                      updateTime=data['timestamp']
-                                                      )
+                                    oldcarrier.marketId = data['MarketID']
+                                    oldcarrier.systemName = data['StarSystem']
+                                    oldcarrier.systemId64 = data['SystemAddress']
+                                    oldcarrier.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                        else False
+                                    oldcarrier.haveOutfitting = True if 'outfitting' in data[
+                                        'StationServices'] else False
+                                    oldcarrier.haveMarket = True if 'commodities' in data['StationServices'] \
+                                        else False
+                                    oldcarrier.updateTime = data['timestamp']
                                 else:
-                                    newcarrier = Carrier(callsign=data['StationName'], marketId=data['marketID'], name=data['StationName'],
-                                                     systemName=data['StarSystem'], systemId64=data['SystemAddress'],
-                                                     haveShipyard=True if 'shipyard' in data['StationServices'] else False,
-                                                     haveOutfitting=True if 'outfitting' in data['StationServices'] else False,
-                                                     haveMarket=True if 'commodities' in data['StationServices'] else False,
-                                                     updateTime=data['timestamp']
-                                                     )
+                                    newcarrier = Carrier(callsign=data['StationName'], marketId=data['MarketID'],
+                                                         name=data['StationName'], updateTime=data['timestamp'],
+                                                         systemName=data['StarSystem'],
+                                                         systemId64=data['SystemAddress'],
+                                                         haveShipyard=True if 'shipyard' in data['StationServices']
+                                                         else False,
+                                                         haveOutfitting=True if 'outfitting' in data['StationServices']
+                                                         else False,
+                                                         haveMarket=True if 'commodities' in data['StationServices']
+                                                         else False
+                                                         )
                                     session.add(newcarrier)
                                 transaction.commit()
                             except DataError as e:
