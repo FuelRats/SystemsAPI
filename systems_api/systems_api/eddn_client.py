@@ -182,6 +182,8 @@ def main(argv=sys.argv):
             proxy.command("botserv", "Absolver", "say #rattech [SAPI]: EDDN client has started.")
         except ProtocolError as e:
             print(f"Failed to send start message to XMLRPC. {e.errmsg}")
+        except TimeoutError as e:
+            print(f"Failed to send start message to XMLRPC. {e.strerror}")
     while True:
         try:
             subscriber.connect(__relayEDDN)
@@ -271,6 +273,8 @@ def main(argv=sys.argv):
                                 transaction.abort()
                             except KeyError as e:
                                 print(f"Invalid key in carrier data: {e}")
+                                print(data)
+                                print(f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
                                 transaction.abort()
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
