@@ -250,6 +250,7 @@ def main(argv=sys.argv):
                         if data['event'] in {'Docked', 'CarrierJump'} and data['StationType'] == 'FleetCarrier':
                             try:
                                 oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
+                                # Consistency?! What's that?
                                 if oldcarrier:
                                     oldcarrier.update(marketId = data['marketID'], systemName = data['StarSystem'],
                                                       systemId64 = data['SystemAddress'],
