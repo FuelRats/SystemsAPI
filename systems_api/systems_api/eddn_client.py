@@ -250,7 +250,7 @@ def main(argv=sys.argv):
                         if data['event'] in {'Docked', 'CarrierJump'} and data['StationType'] == 'FleetCarrier':
                             try:
                                 oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
-                                # Consistency?! What's that?
+                                # Consistency?! What's that? Bah.
                                 if oldcarrier:
                                     oldcarrier.update(marketId = data['marketID'], systemName = data['StarSystem'],
                                                       systemId64 = data['SystemAddress'],
@@ -275,7 +275,8 @@ def main(argv=sys.argv):
                             except KeyError as e:
                                 print(f"Invalid key in carrier data: {e}")
                                 print(data)
-                                print(f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
+                                print(
+                                    f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
                                 transaction.abort()
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
