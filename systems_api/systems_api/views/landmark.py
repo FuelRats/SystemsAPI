@@ -25,7 +25,7 @@ def landmark(request):
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
         if "name" not in request.params:
-            return HTTPBadRequest(details="No name parameter supplied.")
+            return HTTPBadRequest(detail="No name parameter supplied.")
         name = str(request.params['name'])
         result = request.dbsession.query(System).filter(System.name == name).limit(1)
         result2 = request.dbsession.query(Landmark)
@@ -44,7 +44,7 @@ def landmark(request):
         else:
             return {'meta': {'error': 'System not found.'}}
     if "name" not in request.params:
-        return HTTPBadRequest(details="No name parameter supplied.")
+        return HTTPBadRequest(detail="No name parameter supplied.")
     name = str(request.params['name'])
     result = request.dbsession.query(System).filter(System.name == name).limit(1)
     if result.count() > 0:
