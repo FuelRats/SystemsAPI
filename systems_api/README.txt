@@ -77,4 +77,7 @@ Contributions
 --------------
 
 Mostly written by Absolver.
-PG system logic stolen from Esvandiary's EDTS project (https://bitbucket.org/Esvandiary/edts/)
+
+PG system logic stolen from Esvandiary's EDTS project (https://bitbucket.org/Esvandiary/edts/).
+Thanks to Alot/Esvandiary and Jackie Silver for their incredible work on figuring out how PG
+systems are generated.
