@@ -1,3 +1,7 @@
+#
+# This code was yeeted from Esvandiary's EDTS project
+#
+
 from __future__ import print_function, division
 import collections
 import string
@@ -7,6 +11,7 @@ from . import pgdata
 from . import sector
 from . import util
 from . import vector3
+from . import system_internal as system
 
 # #
 # Publicly-useful functions

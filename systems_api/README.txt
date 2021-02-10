@@ -71,3 +71,10 @@ Installing
 - Start the API
 
         env/bin/pserve <yourfile.ini>
+
+
+Contributions
+--------------
+
+Mostly written by Absolver.
+PG system logic stolen from Esvandiary's EDTS project (https://bitbucket.org/Esvandiary/edts/)
