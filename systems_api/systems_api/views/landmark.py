@@ -60,11 +60,12 @@ def landmark(request):
         sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
                    f")^2 + (cast(landmarks.y AS FLOAT) - {y}"
                    f")^2 + (cast(landmarks.z AS FLOAT) - {z}"
-                   f")^2)) as DISTANCE from landmarks ORDER BY DISTANCE LIMIT 1;")
+                   f")^2)) as DISTANCE from landmarks ORDER BY DISTANCE;")
         result = request.dbsession.execute(sql)
         candidates = []
         for row in result:
-            if row['soi'] is None or row['soi'] > row['distance']:
+            print(row['soi'])
+            if row['soi'] is None or row['soi'] > row['distance'] or row['soi'] == 0.0:
                 candidates.append({'name': row['name'], 'distance': row['distance']})
     else:
         return {'meta': {'error': 'System not found.'}}
