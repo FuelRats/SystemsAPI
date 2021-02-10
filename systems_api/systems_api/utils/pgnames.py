@@ -8,7 +8,6 @@ from . import sector
 from . import util
 from . import vector3
 
-
 # #
 # Publicly-useful functions
 # #
@@ -609,18 +608,19 @@ def _get_system_from_pos(input, mcode, allow_ha=True):
 def _get_system_from_name(input, allow_ha=True):
     m = get_system_fragments(input)
     if m is not None and m['SectorName'] is not None:
+
         sect = get_sector(m['SectorName'])
         rel_pos, uncertainty = _get_relpos_from_sysid(m['L1'], m['L2'], m['L3'], m['MCode'], m['N1'], m['N2'])
         if sect is not None and rel_pos is not None and uncertainty is not None:
             cube_width = sector.get_mcode_cube_width(m['MCode'])
             coords = sect.get_origin(cube_width) + rel_pos
             if allow_ha:
-                return None
+                return {'handauthored': True, 'x': coords.x, 'y': coords.y, 'z': coords.z, 'uncertainty': uncertainty}
             else:
                 pg_sect = get_sector(coords, allow_ha=False)
                 # Now subtract the coords from ye olde origin to get the real PG relpos
                 sysid = _get_sysid_from_relpos(coords - pg_sect.get_origin(cube_width), m['MCode'], format_output=True)
-                return None
+                return {'handauthored': False, 'x': coords.x, 'y': coords.y, 'z': coords.z, 'uncertainty': uncertainty}
         else:
             return None
     else:

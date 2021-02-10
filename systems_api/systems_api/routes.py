@@ -10,3 +10,4 @@ def includeme(config):
     config.add_route('nearest_populated', '/nearest_populated')
     config.add_route('nearest_scoopable', '/nearest_scoopable')
     config.add_route('heatmap', '/heatmap')
+    config.add_route('proccoords', '/proccoords')
