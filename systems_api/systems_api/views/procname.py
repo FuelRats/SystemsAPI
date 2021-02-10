@@ -13,8 +13,11 @@ from ..utils import pgnames, system
 def procnames(request):
     if 'name' not in request.params:
         return exc.HTTPBadRequest(details='Missing name parameter')
+    name = pgnames.get_canonical_name(request.params['name'])
+    sectordata = pgnames.get_system(name)
     return {'is_pg_system': pgnames.is_pg_system_name(request.params['name'], True),
-            'is_pg_sector': pgnames.is_valid_sector_name(request.params['name'])}
+            'is_pg_sector': pgnames.is_valid_sector_name(request.params['name']),
+            'sectordata': sectordata}
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
