@@ -64,7 +64,7 @@ def landmark(request):
         result = request.dbsession.execute(sql)
         candidates = []
         for row in result:
-            if row['soi'] is None or row['soi'] > distance:
+            if row['soi'] is None or row['soi'] > row['distance']:
                 candidates.append({'name': row['name'], 'distance': row['distance']})
     else:
         return {'meta': {'error': 'System not found.'}}
