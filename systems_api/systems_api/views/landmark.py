@@ -21,7 +21,7 @@ def landmark(request):
         landmarks = []
         for row in result:
             landmarks.append({'name': row.name, 'x': row.x, 'y': row.y,
-                              'z': row.z})
+                              'z': row.z, 'soi': row.soi})
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
         if "name" not in request.params:
@@ -37,7 +37,8 @@ def landmark(request):
                 y = float(row['coords']['y'])
                 z = float(row['coords']['z'])
                 sysname = str(row['name'])
-            newlandmark = Landmark(name=sysname, x=x, y=y, z=z)
+            newlandmark = Landmark(name=sysname, x=x, y=y, z=z,
+                                   soi=requests.params['soi'] if 'soi' in request.params else None)
             request.dbsession.add(newlandmark)
             return {'meta': {'success': 'System added as a landmark.'}}
         else:
@@ -63,7 +64,8 @@ def landmark(request):
         result = request.dbsession.execute(sql)
         candidates = []
         for row in result:
-            candidates.append({'name': row['name'], 'distance': row['distance']})
+            if row['soi'] is not None and row['soi'] < distance:
+                candidates.append({'name': row['name'], 'distance': row['distance']})
     else:
         return {'meta': {'error': 'System not found.'}}
     return {'meta': {'name': name},

@@ -13,3 +13,4 @@ class Landmark(Base):
     x = Column(Float)
     y = Column(Float)
     z = Column(Float)
+    soi = Column(Float)

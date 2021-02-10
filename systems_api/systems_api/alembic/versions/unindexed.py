@@ -24,6 +24,7 @@ def upgrade():
         sa.Column('x', sa.Float(), nullable=True),
         sa.Column('y', sa.Float(), nullable=True),
         sa.Column('z', sa.Float(), nullable=True),
+        sa.Column('soi', sa.Float(), nullable=True),
     )
     op.create_table('models',
         sa.Column('id', sa.Integer(), nullable=False),
