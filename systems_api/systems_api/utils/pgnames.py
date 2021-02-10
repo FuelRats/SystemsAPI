@@ -620,12 +620,12 @@ def _get_system_from_name(input, allow_ha=True):
             cube_width = sector.get_mcode_cube_width(m['MCode'])
             coords = sect.get_origin(cube_width) + rel_pos
             if allow_ha:
-                return {'handauthored': True, 'x': coords.x, 'y': coords.y, 'z': coords.z, 'uncertainty': uncertainty}
+                return {'handauthored': True, 'coords': {'x': coords.x, 'y': coords.y, 'z': coords.z}, 'uncertainty': uncertainty}
             else:
                 pg_sect = get_sector(coords, allow_ha=False)
                 # Now subtract the coords from ye olde origin to get the real PG relpos
                 sysid = _get_sysid_from_relpos(coords - pg_sect.get_origin(cube_width), m['MCode'], format_output=True)
-                return {'handauthored': False, 'x': coords.x, 'y': coords.y, 'z': coords.z, 'uncertainty': uncertainty}
+                return {'handauthored': False, 'coords': {'x': coords.x, 'y': coords.y, 'z': coords.z}, 'uncertainty': uncertainty}
         else:
             return None
     else:
