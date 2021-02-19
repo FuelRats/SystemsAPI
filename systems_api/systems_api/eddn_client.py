@@ -248,7 +248,7 @@ def main(argv=None):
                                 print(f"XMLRPC call failed, skipping this update. {e.errmsg}")
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
-                            print("Running stats update...")
+                            # print("Running stats update...")
                             loop = asyncio.get_event_loop()
                             future = asyncio.Future()
                             asyncio.ensure_future(update_stats(session, future))
@@ -271,44 +271,45 @@ def main(argv=None):
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
-                        if data['event'] in {'Docked', 'CarrierJump'} and data['StationType'] == 'FleetCarrier':
-                            try:
-                                oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
-                                # Consistency?! What's that? Bah.
-                                if oldcarrier:
-                                    oldcarrier.marketId = data['MarketID']
-                                    oldcarrier.systemName = data['StarSystem']
-                                    oldcarrier.systemId64 = data['SystemAddress']
-                                    oldcarrier.haveShipyard = True if 'shipyard' in data['StationServices'] \
-                                        else False
-                                    oldcarrier.haveOutfitting = True if 'outfitting' in data[
-                                        'StationServices'] else False
-                                    oldcarrier.haveMarket = True if 'commodities' in data['StationServices'] \
-                                        else False
-                                    oldcarrier.updateTime = data['timestamp']
-                                else:
-                                    newcarrier = Carrier(callsign=data['StationName'], marketId=data['MarketID'],
-                                                         name=data['StationName'], updateTime=data['timestamp'],
-                                                         systemName=data['StarSystem'],
-                                                         systemId64=data['SystemAddress'],
-                                                         haveShipyard=True if 'shipyard' in data['StationServices']
-                                                         else False,
-                                                         haveOutfitting=True if 'outfitting' in data['StationServices']
-                                                         else False,
-                                                         haveMarket=True if 'commodities' in data['StationServices']
-                                                         else False
-                                                         )
-                                    session.add(newcarrier)
-                                transaction.commit()
-                            except DataError as e:
-                                print(f"Failed to add a carrier! Invalid data passed: {e}")
-                                transaction.abort()
-                            except KeyError as e:
-                                print(f"Invalid key in carrier data: {e}")
-                                print(data)
-                                print(
-                                    f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
-                                transaction.abort()
+                        if data['event'] in {'Docked', 'CarrierJump'}:
+                            if 'StationType' in data and data['StationType'] == 'FleetCarrier':
+                                try:
+                                    oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
+                                    # Consistency?! What's that? Bah.
+                                    if oldcarrier:
+                                        oldcarrier.marketId = data['MarketID']
+                                        oldcarrier.systemName = data['StarSystem']
+                                        oldcarrier.systemId64 = data['SystemAddress']
+                                        oldcarrier.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                            else False
+                                        oldcarrier.haveOutfitting = True if 'outfitting' in data[
+                                            'StationServices'] else False
+                                        oldcarrier.haveMarket = True if 'commodities' in data['StationServices'] \
+                                            else False
+                                        oldcarrier.updateTime = data['timestamp']
+                                    else:
+                                        newcarrier = Carrier(callsign=data['StationName'], marketId=data['MarketID'],
+                                                             name=data['StationName'], updateTime=data['timestamp'],
+                                                             systemName=data['StarSystem'],
+                                                             systemId64=data['SystemAddress'],
+                                                             haveShipyard=True if 'shipyard' in data['StationServices']
+                                                             else False,
+                                                             haveOutfitting=True if 'outfitting' in data['StationServices']
+                                                             else False,
+                                                             haveMarket=True if 'commodities' in data['StationServices']
+                                                             else False
+                                                             )
+                                        session.add(newcarrier)
+                                    transaction.commit()
+                                except DataError as e:
+                                    print(f"Failed to add a carrier! Invalid data passed: {e}")
+                                    transaction.abort()
+                                except KeyError as e:
+                                    print(f"Invalid key in carrier data: {e}")
+                                    print(data)
+                                    print(
+                                        f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
+                                    transaction.abort()
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
                             id64 = data['SystemAddress']

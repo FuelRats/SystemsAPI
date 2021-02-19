@@ -64,7 +64,6 @@ def landmark(request):
         result = request.dbsession.execute(sql)
         candidates = []
         for row in result:
-            print(row['soi'])
             if row['soi'] is None or row['soi'] > row['distance'] or row['soi'] == 0.0:
                 candidates.append({'name': row['name'], 'distance': row['distance']})
     else:
