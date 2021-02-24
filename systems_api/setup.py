@@ -30,6 +30,7 @@ requires = [
     'colander',
     'deform',
     'numpy',
+    'plotly'
 ]
 
 tests_require = [
@@ -66,6 +67,7 @@ setup(
         ],
         'console_scripts': [
             'initialize_systems_api_db=systems_api.scripts.initialize_db:main',
+            'generate_heatmap=systems_api.scripts.generate_heatmap:main',
         ],
     },
 )
