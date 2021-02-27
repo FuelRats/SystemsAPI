@@ -43,7 +43,7 @@ def mecha(request):
     query = request.dbsession.query(System).filter(System.name.ilike(name))
     for candidate in query:
         candidates.append({'name': candidate.name, 'similarity': 1,
-                           'id64': candidate.id64,
+                           'id64': candidate.id64, 'coords': candidate.coords,
                            'permit_required': True if candidate.id64 in perm_systems else False,
                            'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
                            })
@@ -60,7 +60,7 @@ def mecha(request):
         for candidate in pmatch:
             # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                               'id64': candidate[0].id64,
+                               'id64': candidate[0].id64, 'coords': candidate[0].coords,
                                'permit_required': True if candidate[0].id64 in perm_systems else False,
                                'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                                })
@@ -76,7 +76,7 @@ def mecha(request):
         print(candidate)
         if candidate[1] < 3:
             candidates.append({'name': candidate[0].name, 'distance': candidate[1],
-                               'id64': candidate[0].id64,
+                               'id64': candidate[0].id64, 'coords': candidate[0].coords,
                                'permit_required': True if candidate[0].id64 in perm_systems else False,
                                'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                                })
@@ -87,7 +87,7 @@ def mecha(request):
         filter(System.name.ilike(name+"%")).limit(5000).from_self().order_by(func.similarity(System.name, name).desc())
     for candidate in query:
         candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                           'id64': candidate[0].id64,
+                           'id64': candidate[0].id64, 'coords': candidate[0].coords,
                            'permit_required': True if candidate[0].id64 in perm_systems else False,
                            'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                            })
@@ -104,7 +104,7 @@ def mecha(request):
             for candidate in pmatch:
                 # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
                 candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                                   'id64': candidate[0].id64,
+                                   'id64': candidate[0].id64, 'coords': candidate[0].coords,
                                    'permit_required': True if candidate[0].id64 in perm_systems else False,
                                    'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
                                    })
