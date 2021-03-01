@@ -139,7 +139,7 @@ async def update_stats(session, future):
     :param future: Async future
     """
     print(f"                                                                                       "
-          f"                      Update started: {datetime.now()}!\r")
+          f"                      Update started: {datetime.now()}!\r", end='')
     startot = session.query(func.count(Star.id64)).scalar()
     systot = session.query(func.count(System.id64)).scalar()
     bodytot = session.query(func.count(Body.id64)).scalar()
@@ -156,7 +156,7 @@ def update_complete(future):
     :param future: Async future
     """
     print(f"                                                                                       "
-          f"                      Update completed: {datetime.now()}!\r")
+          f"                      Update completed: {datetime.now()}!\r", end='')
 
 
 def usage(argv):
