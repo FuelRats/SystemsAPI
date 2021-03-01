@@ -8,6 +8,7 @@ import os
 import semver
 import re
 import asyncio
+from datetime import datetime
 
 from xmlrpc.client import ServerProxy, ProtocolError
 
@@ -137,6 +138,8 @@ async def update_stats(session, future):
     :param session: The DBSession
     :param future: Async future
     """
+    print(f"                                                                                       "
+          f"                      Update started: {datetime.now()}!\r")
     startot = session.query(func.count(Star.id64)).scalar()
     systot = session.query(func.count(System.id64)).scalar()
     bodytot = session.query(func.count(Body.id64)).scalar()
@@ -152,7 +155,8 @@ def update_complete(future):
     Callback for completed stats update
     :param future: Async future
     """
-    print(future.result)
+    print(f"                                                                                       "
+          f"                      Update completed: {datetime.now()}!\r")
 
 
 def usage(argv):
