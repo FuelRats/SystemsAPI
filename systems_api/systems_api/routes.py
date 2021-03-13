@@ -11,3 +11,4 @@ def includeme(config):
     config.add_route('nearest_scoopable', '/nearest_scoopable')
     config.add_route('heatmap', '/heatmap')
     config.add_route('proccoords', '/proccoords')
+    config.add_route('get_ha_regions', '/get_ha_regions')
