@@ -6,6 +6,7 @@ from pyramid.view import (
 import pyramid.httpexceptions as exc
 
 from ..utils import pgnames, system
+import json
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
@@ -34,4 +35,8 @@ def proccoords(request):
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='get_ha_regions', renderer='json')
 def get_ha_regions(request):
-    return pgnames.get_ha_regions().to_json()
+    regions = pgnames.get_ha_regions()
+    ret = []
+    for region in regions:
+        ret.append(json.dumps(region))
+    return ret
