@@ -38,5 +38,5 @@ def get_ha_regions(request):
     regions = pgnames.get_ha_regions()
     ret = []
     for region in regions:
-        ret.append(json.dumps(region))
+        ret.append(region)
     return ret
