@@ -3,7 +3,7 @@ from pyramid.view import (
     view_defaults
 )
 from sqlalchemy import text, func
-from ..models import System, Permits, Carrier, Star, PopulatedSystem
+from ..models import System, Permits, Carrier, Star, PopulatedSystem, Station
 import pyramid.httpexceptions as exc
 from ..utils.util import checkpermitname, resultstocandidates
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -52,8 +52,16 @@ def nearest_populated(request):
             b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
             dist = numpy.linalg.norm(a - b)
             print(f"{candidate.name}: {dist}")
+            stations = []
+            station_query = request.dbsession.query(Station).filter(Station.id64 == candidate.id64)
+            if station_query:
+                for station in station_query:
+                    stations.append({'name': station.name, 'type': station.type,
+                                     'distance': station.distanceToArrival, 'hasOutfitting': station.haveOutfitting,
+                                     'services': station.otherServices, 'hasShipyard': station.haveShipyard,
+                                     'hasMarket': station.haveMarket})
             return {'meta': {'name': system.name, 'type': 'nearest_populated'},
-                    'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64}}
+                    'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64, 'stations': stations}}
         except ValueError:
             print(
                 f"Value error: Failed for {candidate.coords['x']}, {candidate.coords['y']}, {candidate.coords['z']}")
