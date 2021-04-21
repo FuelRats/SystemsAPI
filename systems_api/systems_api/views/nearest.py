@@ -53,7 +53,7 @@ def nearest_populated(request):
             dist = numpy.linalg.norm(a - b)
             print(f"{candidate.name}: {dist}")
             stations = []
-            station_query = request.dbsession.query(Station).filter(Station.id64 == candidate.id64)
+            station_query = request.dbsession.query(Station).filter(Station.systemId64 == candidate.id64)
             if station_query:
                 for station in station_query:
                     stations.append({'name': station.name, 'type': station.type,
