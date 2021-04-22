@@ -39,9 +39,9 @@ def main(argv=sys.argv):
     session_factory = get_session_factory(engine)
     session = get_tm_session(session_factory, transaction.manager)
 
-    if os.path.isfile('stations.json'):
+    if os.path.isfile('stations.json.gz'):
         if datetime.fromtimestamp(os.path.getmtime('stations.json')) > datetime.today() - timedelta(days=7):
-            print("Using cached stations.json")
+            print("Using cached stations.json.gz")
     else:
         print("Downloading stations.json from EDSM.net...")
         r = requests.get("	https://www.edsm.net/dump/stations.json.gz", stream=True)
@@ -51,7 +51,7 @@ def main(argv=sys.argv):
                     f.write(chunk)
         print("Saved stations.json. Converting JSONL to SQL.")
 
-    with gzip.open('stations.json', 'rb') as infile:
+    with gzip.open('stations.json.gz', 'rb') as infile:
         counter = 0
         j = bigjson.load(infile)
         for element in j:
