@@ -325,7 +325,7 @@ def main(argv=None):
                                     #print(f"Got a station: {data}")
                                     # Station data, check if exists.
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
-                                        filter(Station.systemName == data['SystemName'])
+                                        filter(Station.systemName == data['StarSystem'])
                                     if oldstation:
                                         continue
                                     else:
