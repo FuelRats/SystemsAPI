@@ -259,15 +259,15 @@ def main(argv=None):
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
                             # print("Running stats update...")
-                            #loop = asyncio.get_event_loop()
-                            #future = asyncio.Future()
-                            #asyncio.ensure_future(update_stats(session, future))
-                            #future.add_done_callback(update_complete)
+                            loop = asyncio.get_event_loop()
+                            future = asyncio.Future()
+                            asyncio.ensure_future(update_stats(session, future))
+                            future.add_done_callback(update_complete)
                             try:
-                                #loop.run_until_complete(future)
-                                #proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] "
-                                #                                      f"Hourly report: {hmessages} messages, "
-                                #                                      f"{totmsg - hmessages} ignored.")
+                                loop.run_until_complete(future)
+                                proxy.command(f"botserv", "Absolver", f"say #announcerdev [\x0315SAPI\x03] "
+                                                                      f"Hourly report: {hmessages} messages, "
+                                                                      f"{totmsg - hmessages} ignored.")
                                 lasthourly = time.time()
                                 hmessages = 0
                                 totmsg = 0
@@ -322,7 +322,7 @@ def main(argv=None):
                                     transaction.abort()
                             else:
                                 try:
-                                    print(f"Got a station: {data}")
+                                    #print(f"Got a station: {data}")
                                     # Station data, check if exists.
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
                                         filter(Station.systemName == data['SystemName'])
