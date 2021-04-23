@@ -32,6 +32,7 @@ from systems_api.models.system import System
 from systems_api.models.stats import Stats
 from systems_api.models.body import Body
 from systems_api.models.carrier import Carrier
+from systems_api.models.station import Station
 
 __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
@@ -145,7 +146,8 @@ async def update_stats(session, future):
     bodytot = session.query(func.count(Body.id64)).scalar()
     newstats = Stats(syscount=systot, starcount=startot, bodycount=bodytot,
                      lastupdate=int(time.time()))
-    session.query(Stats).delete()
+    if session.query(Stats):
+        session.query(Stats).delete()
     session.add(newstats)
     future.set_result('System statistics updated.')
 
@@ -199,7 +201,9 @@ def main(argv=None):
     messages = 0
     syscount = 0
     starcount = 0
+    stationcount = 0
     failstar = 0
+    failstation = 0
     totmsg = 0
     hmessages = 0
     if proxy:
@@ -224,7 +228,7 @@ def main(argv=None):
                 __json = simplejson.loads(__message)
                 totmsg = totmsg + 1
                 print(f"EDDN Client running. Messages: {messages:10} Stars: {starcount:10} Systems: {syscount:10} "
-                      f"Missing systems: {failstar:10}\r",
+                      f" Stations: {stationcount:5} Missing systems: {failstar+failstation:10}\r",
                       end='')
                 if validsoftware(__json['header']['softwareName'], __json['header']['softwareVersion']) \
                         and __json['$schemaRef'] in __allowedSchema:
@@ -244,6 +248,8 @@ def main(argv=None):
                                 syscount = 0
                                 starcount = 0
                                 failstar = 0
+                                stationcount = 0
+                                failstation = 0
                                 starttime = time.time()
                             except TimeoutError:
                                 print("XMLRPC call failed due to timeout, retrying in 320 seconds.")
@@ -314,6 +320,40 @@ def main(argv=None):
                                     print(
                                         f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
                                     transaction.abort()
+                            else:
+                                try:
+                                    # Station data, check if exists.
+                                    oldstation = session.query(Station).filter(Station.name == data['StationName']).\
+                                        filter(Station.systemName == data['SystemName'])
+                                    if oldstation:
+                                        continue
+                                    else:
+                                        # New station, add it!
+                                        newstation = Station(id64=data['MarketID'], name=data['StationName'],
+                                                             distanceToArrival=data['DistanceToArrival'],
+                                                             allegiance=data['Allegiance'], government=data['Government'],
+                                                             economy=data['Economy'],
+                                                             haveMarket=True if 'commodities' in data['StationServices']
+                                                             else False,
+                                                             haveShipyard=True if 'shipyard' in data['StationServices']
+                                                             else False,
+                                                             haveOutfitting=True if 'outfitting' in data['StationServices']
+                                                             else False,
+                                                             updateTime=data['timestamp'],
+                                                             systemId64=data['SystemAddress'],
+                                                             systemName=data['SystemName']
+                                                             )
+                                        session.add(newstation)
+                                        stationcount += 1
+                                except DataError as e:
+                                    print(f"Failed to add a station! Invalid data passed: {e}")
+                                    transaction.abort()
+                                except KeyError as e:
+                                    print(f"Invalid key in station data: {e}")
+                                except IntegrityError:
+                                    failstation = failstation + 1
+                                    transaction.abort()
+
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
                             id64 = data['SystemAddress']
