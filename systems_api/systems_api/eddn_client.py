@@ -9,6 +9,7 @@ import semver
 import re
 import asyncio
 from datetime import datetime
+import requests
 
 from xmlrpc.client import ServerProxy, ProtocolError
 
@@ -38,6 +39,7 @@ __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
 __scoopable = ['K', 'G', 'B', 'F', 'O', 'A', 'M']
 
+__EDSM_url = 'https://edsm.net/api-v1'
 __allowedSchema = [
     "https://eddn.edcd.io/schemas/journal/1"
 ]
@@ -413,8 +415,22 @@ def main(argv=None):
                                         print("Failed to add star - Data Error!")
                                         transaction.abort()
                                     except IntegrityError:
-                                        failstar = failstar + 1
-                                        transaction.abort()
+                                        try:
+                                            r = requests.get(f"{__EDSM_url}/systems?systemName={data['SystemName']}&"
+                                                             f"showId=1&showCoordinates=1&showInformation=1").json()[0]
+                                            if r:
+                                                system = System(id64=r['id64'], name=r['name'], coords=r['coords'])
+                                                session.add(system)
+                                                transaction.commit()
+                                        except IntegrityError:
+                                            print("Failed to add system during missing star handling. Bah. Give up.")
+                                            failstar = failstar + 1
+                                            transaction.abort()
+                                        except KeyError:
+                                            #print("No EDSM data found.")
+                                            failstar += 1
+                                            transaction.abort()
+
                 sys.stdout.flush()
 
         except zmq.ZMQError as e:
