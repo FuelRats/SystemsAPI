@@ -44,7 +44,7 @@ def main(argv=sys.argv):
             print("Using cached stations.json.gz")
     else:
         print("Downloading stations.json from EDSM.net...")
-        r = requests.get("	https://www.edsm.net/dump/stations.json.gz", stream=True)
+        r = requests.get("https://www.edsm.net/dump/stations.json.gz", stream=True)
         with open('stations.json.gz', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
@@ -71,9 +71,10 @@ def main(argv=sys.argv):
             if counter >= 1000:
                 transaction.commit()
                 counter = 0
+        transaction.commit()
 
     print("Creating indexes...")
-    session.execute("CREATE INDEX index_stations_systemid_btree ON stations(\"systemId\")")
+    session.execute("CREATE INDEX index_stations_systemid_btree ON stations(\"systemId64\")")
     transaction.commit()
     session.execute("CREATE INDEX index_stations_btree ON stations(id)")
     transaction.commit()
