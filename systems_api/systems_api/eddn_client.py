@@ -297,7 +297,7 @@ def main(argv=None):
                                         oldcarrier.haveMarket = True if 'commodities' in data['StationServices'] \
                                             else False
                                         oldcarrier.updateTime = data['timestamp']
-                                    else:
+                                    elif 'StationType' in data and data['StationType'] != 'FleetCarrier':
                                         newcarrier = Carrier(callsign=data['StationName'], marketId=data['MarketID'],
                                                              name=data['StationName'], updateTime=data['timestamp'],
                                                              systemName=data['StarSystem'],
@@ -369,6 +369,9 @@ def main(argv=None):
                                 except DataError:
                                     print("Failed to add a system! Invalid data passed")
                                     transaction.abort()
+                                except IntegrityError:
+                                    transaction.abort()
+
                         if data['event'] == 'Scan':
                             bodyid = data['SystemAddress'] + (data['BodyID'] << 55)
                             if 'AbsoluteMagnitude' in data:
