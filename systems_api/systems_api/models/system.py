@@ -22,6 +22,7 @@ class System(Base):
     date.info.update({'pyramid_jsonapi': {'visible': False}})
     planets = relationship("Body")
     stars = relationship("Star")
+    stations = relationship("Station")
 
 
 Index('system_idx_id64', System.id64, unique=True)
