@@ -46,25 +46,30 @@ def nearest_populated(request):
             text(f"SELECT *, (sqrt((cast(populated_systems.coords->>'x' AS FLOAT) - {x}"
                  f")^2 + (cast(populated_systems.coords->>'y' AS FLOAT) - {y}"
                  f")^2 + (cast(populated_systems.coords->>'z' AS FLOAT) - {z}"
-                 f")^2)) as Distance from populated_systems order by Distance LIMIT 1")).one()
-        try:
-            a = numpy.array((x, y, z))
-            b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
-            dist = numpy.linalg.norm(a - b)
-            print(f"{candidate.name}: {dist}")
-            stations = []
-            station_query = request.dbsession.query(Station).filter(Station.systemId64 == candidate.id64)
-            if station_query:
-                for station in station_query:
-                    stations.append({'name': station.name, 'type': station.type,
-                                     'distance': station.distanceToArrival, 'hasOutfitting': station.haveOutfitting,
-                                     'services': station.otherServices, 'hasShipyard': station.haveShipyard,
-                                     'hasMarket': station.haveMarket})
-            return {'meta': {'name': system.name, 'type': 'nearest_populated'},
-                    'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64, 'stations': stations}}
-        except ValueError:
-            print(
-                f"Value error: Failed for {candidate.coords['x']}, {candidate.coords['y']}, {candidate.coords['z']}")
+                 f")^2)) as Distance from populated_systems order by Distance LIMIT 5")).all()
+        populated_systems = []
+        for cand in candidate:
+            try:
+                a = numpy.array((x, y, z))
+                b = numpy.array((cand.coords['x'], cand.coords['y'], cand.coords['z']))
+                dist = numpy.linalg.norm(a - b)
+                #print(f"{cand.name}: {dist}")
+
+                stations = []
+                station_query = request.dbsession.query(Station).filter(Station.systemId64 == cand.id64)
+                if station_query:
+                    for station in station_query:
+                        stations.append({'name': station.name, 'type': station.type,
+                                         'distance': station.distanceToArrival, 'hasOutfitting': station.haveOutfitting,
+                                         'services': station.otherServices, 'hasShipyard': station.haveShipyard,
+                                         'hasMarket': station.haveMarket})
+                    populated_systems.append({'distance': dist, 'name': cand.name,
+                                              'id64': cand.id64, 'stations': stations})
+            except ValueError:
+                print(
+                    f"Value error: Failed for {cand.coords['x']}, {cand.coords['y']}, {cand.coords['z']}")
+        return {'meta': {'name': system.name, 'type': 'nearest_populated'},
+                'data': populated_systems}
     else:
         return exc.HTTPBadRequest('Missing required parameter (name or systemid64')
 
