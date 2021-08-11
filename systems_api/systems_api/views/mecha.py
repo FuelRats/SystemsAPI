@@ -26,18 +26,31 @@ def mecha(request):
     if 'name' not in request.params:
         return exc.HTTPBadRequest(detail="Missing 'name' parameter.")
     name = unquote(request.params['name'])
-    if len(name) < 3:
-        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
-    # Prevent SAPI from choking on a search that contains just a PG sector's mass code.
-    m = pg_system_regex.match(name.strip())
-    if m:
-        return {'meta': {'error': 'Incomplete PG system name.',
-            'type': 'incomplete_name'}}
     candidates = []
     permsystems = request.dbsession.query(Permits)
     perm_systems = []
     for system in permsystems:
         perm_systems.append(system.id64)
+
+    if len(name) < 3:
+        # Too short for trigram searches. Either return an exact match, or fail.
+        query = request.dbsession.query(System).filter(System.name.eq(name))
+        for candidate in query:
+            candidates.append({'name': candidate.name, 'similarity': 1,
+                               'id64': candidate.id64, 'coords': candidate.coords,
+                               'permit_required': True if candidate.id64 in perm_systems else False,
+                               'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                               })
+        if len(candidates) > 0:
+            return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+        else:
+            return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+
+    # Prevent SAPI from choking on a search that contains just a PG sector's mass code.
+    m = pg_system_regex.match(name.strip())
+    if m:
+        return {'meta': {'error': 'Incomplete PG system name.',
+            'type': 'incomplete_name'}}
 
     # Check for immediate match, case insensitive.
     query = request.dbsession.query(System).filter(System.name.ilike(name))
