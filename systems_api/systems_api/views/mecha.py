@@ -34,7 +34,7 @@ def mecha(request):
 
     if len(name) < 3:
         # Too short for trigram searches. Either return an exact match, or fail.
-        query = request.dbsession.query(System).filter(System.name.eq(name))
+        query = request.dbsession.query(System).filter(System.name == name)
         for candidate in query:
             candidates.append({'name': candidate.name, 'similarity': 1,
                                'id64': candidate.id64, 'coords': candidate.coords,
