@@ -75,6 +75,44 @@ def nearest_populated(request):
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
+@view_config(route_name='nearest_coords', renderer='json')
+def nearest_coords(request):
+    """
+    Returns the nearest system in DB given a set of coordinates.
+    :param request: Pyramid request object
+    :return: A JSON response object
+    """
+    if 'x' not in request.params or 'y' not in request.params or 'z' not in request.params:
+        return exc.HTTPBadRequest('Missing X, Y or Z coordinate for search.')
+    try:
+        x, y, z = float(request.params['x']), float(request.params['y']), float(request.params['z'])
+        system = System()
+        cube = 50
+
+        candidate = request.dbsession.query(System).from_statement(
+            text(f"SELECT *, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
+                 f")^2 + (cast(systems.coords->>'y' AS FLOAT) - {y}"
+                 f")^2 + (cast(systems.coords->>'z' AS FLOAT) - {z}"
+                 f")^2)) AS Distance FROM systems JOIN stars ON systems.id64 = stars.\"systemId64\""
+                 f" WHERE cast(systems.coords->>'x' AS FLOAT) BETWEEN {str(float(x)-cube)} AND {str(float(x)+cube)}"
+                 f" AND cast(systems.coords->>'y' AS FLOAT) BETWEEN {str(float(y)-cube)} AND {str(float(y)+cube)}"
+                 f" AND cast(systems.coords->>'z' as FLOAT)"
+                 f" BETWEEN {str(float(z)-cube)} AND {str(float(z)+cube)} order by Distance LIMIT 1")).one()
+        a = numpy.array((x, y, z))
+        b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
+        dist = numpy.linalg.norm(a - b)
+
+        return {'meta': {'name': system.name, 'type': 'nearest_coords'},
+                'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64}}
+
+    except NoResultFound:
+        return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
+                'error': 'No scoopable systems found.'}
+    except ValueError:
+        return exc.HTTPBadRequest('Malformed request data.')
+
+
+@view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='nearest_scoopable', renderer='json')
 def nearest_scoopable(request):
     """
@@ -117,9 +155,10 @@ def nearest_scoopable(request):
             text(f"SELECT *, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
                  f")^2 + (cast(systems.coords->>'y' AS FLOAT) - {y}"
                  f")^2 + (cast(systems.coords->>'z' AS FLOAT) - {z}"
-                 f")^2)) as Distance from systems JOIN stars ON systems.id64 = stars.\"systemId64\" "
-                 f"where cast(systems.coords->>'x' AS FLOAT) BETWEEN {str(float(x)-cube)} AND {str(float(x)+cube)}"
-                 f" AND cast(systems.coords->>'y' AS FLOAT) BETWEEN {str(float(y)-cube)} AND {str(float(y)+cube)} AND cast(systems.coords->>'z' as FLOAT)"
+                 f")^2)) AS Distance FROM systems JOIN stars ON systems.id64 = stars.\"systemId64\""
+                 f" WHERE cast(systems.coords->>'x' AS FLOAT) BETWEEN {str(float(x)-cube)} AND {str(float(x)+cube)}"
+                 f" AND cast(systems.coords->>'y' AS FLOAT) BETWEEN {str(float(y)-cube)} AND {str(float(y)+cube)}"
+                 f" AND cast(systems.coords->>'z' as FLOAT)"
                  f" BETWEEN {str(float(z)-cube)} AND {str(float(z)+cube)} order by Distance LIMIT 1")).one()
         a = numpy.array((x, y, z))
         b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
