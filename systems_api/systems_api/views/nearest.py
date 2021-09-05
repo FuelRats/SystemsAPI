@@ -43,7 +43,7 @@ def nearest_populated(request):
         except MultipleResultsFound:
             return exc.HTTPServerError('Multiple rows matching system found. Ensure system is unambiguous.')
     if 'limit' in request.params:
-        if request['limit'] > 100:
+        if request.params['limit'] > 100:
             limit = 100
         else:
             limit = abs(request['limit'])
