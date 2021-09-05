@@ -22,6 +22,7 @@ def nearest_populated(request):
     """
     x, y, z = 0.0, 0.0, 0.0
     system = System()
+    limit = 10
     if 'systemid64' in request.params:
         try:
             system = request.dbsession.query(System).filter(System.id64 == request.params['systemid64']).one()
@@ -41,12 +42,16 @@ def nearest_populated(request):
             return exc.HTTPBadRequest('System not found.')
         except MultipleResultsFound:
             return exc.HTTPServerError('Multiple rows matching system found. Ensure system is unambiguous.')
-
+    if 'limit' in request.params:
+        if request['limit'] > 100:
+            limit = 100
+        else:
+            limit = abs(request['limit'])
         candidate = request.dbsession.query(PopulatedSystem).from_statement(
             text(f"SELECT *, (sqrt((cast(populated_systems.coords->>'x' AS FLOAT) - {x}"
                  f")^2 + (cast(populated_systems.coords->>'y' AS FLOAT) - {y}"
                  f")^2 + (cast(populated_systems.coords->>'z' AS FLOAT) - {z}"
-                 f")^2)) as Distance from populated_systems order by Distance LIMIT 5")).all()
+                 f")^2)) as Distance from populated_systems order by Distance LIMIT {limit}")).all()
         populated_systems = []
         for cand in candidate:
             try:
