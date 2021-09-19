@@ -19,29 +19,52 @@ def fetch_system(request):
     :param request:
     :return:
     """
+    edsm_system = None
+    data = {'deleted_stars': 0, 'deleted_bodies': 0, 'deleted_stations': 0, 'is_new_system': False,
+            'added_stars': 0, 'added_bodies': 0, 'added_stations': 0,
+            'fc_skipped': 0, 'is_populated': False}
     if 'systemName' not in request.params and 'systemId' not in request.params:
         return exc.HTTPBadRequest('Missing systemName or systemId parameter')
-    if 'systemName' in request.params:
+    if 'systemId' in request.params:
+        print("Fetch EDSM system info")
+        edsm_system = edsm.fetch_edsm_system_by_id(request.params['systemId'])
+        if not edsm_system:
+            return exc.HTTPBadRequest('No EDSM with that systemID.')
+        systemName = edsm_system['systemName']
+    else:
+        systemName = request.params['systemName']
+    if systemName:
         print("Look up own system data...")
-        sys = request.dbsession.query(System).filter(System.name == request.params['systemName']).first()
-        scount = 0
-        bcount = 0
-        stcount = 0
-
+        sys = request.dbsession.query(System).filter(System.name == systemName).first()
+        if not sys:
+            print("No system, lookup in populated...")
+            sys = request.dbsession.query(PopulatedSystem).filter(PopulatedSystem.name == systemName).first()
         if sys:
             print(f"Got system with id {sys.id64}. Fetching for canonical name {sys.name}")
             edsm_system = edsm.fetch_edsm_system_by_name(sys.name)
             print(f"Got json: {edsm_system}")
-            if sys.id64 != edsm_system['id64']:
+            if sys.id64 != edsm_system['id64'] and 'force' not in request.params:
                 print("ERROR! The systemId64 in EDSM does not match the SAPI systemID64. This is probably bad.")
                 return {'Error': f'SystemID64 returned from EDSM does not match SAPI ID64. SAPI ID64 {sys.id64} is for '
-                                 f'{sys.name}, EDSM claims it is {edsm_system["name"]}'}
+                                 f'{sys.name}, EDSM claims it is {edsm_system["name"]}. Verify system is correct and '
+                                 f'pass force=True as a parameter to override.'}
         else:
-            print(f"Unknown system for us, fetch by input name.")
-            edsm_system = edsm.fetch_edsm_system_by_name(request.params['systemName'])
+            print(f"Unknown system for us, fetch by input name from EDSM.")
+            if not edsm_system:
+                edsm_system = edsm.fetch_edsm_system_by_name(request.params['systemName'])
+            if not edsm_system:
+                return exc.HTTPBadRequest('System name does not exist in SAPI or EDSM.')
+            print(f"Json: {edsm_system}")
             print(f"Creating new system.")
-            sys = System(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
-                         date=datetime.datetime.utcnow())
+            data['is_new_system'] = True
+            if edsm_system['information']['population'] > 0:
+                print("System is populated.")
+                data['is_populated'] = True
+                sys = PopulatedSystem(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
+                                      controllingFaction=edsm_system['information'], date=datetime.datetime.utcnow())
+            else:
+                sys = System(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
+                             date=datetime.datetime.utcnow())
             request.dbsession.add(sys)
             transaction.commit()
             request.dbsession.flush()
@@ -58,11 +81,12 @@ def fetch_system(request):
 
         for row in sstars:
             print(f"Star {row.name} with ID {row.id64} up for deletion.")
-            scount += 1
+            data['deleted_stars'] += 1
         for row in sbodies:
             print(f"Body {row.name} with ID {row.id64} up for deletion.")
-            bcount += 1
-        print(f"Ready to replace {scount} stars, {bcount} bodies and {stcount} stations.")
+            data['deleted_bodies'] += 1
+        print(f"Ready to replace {data['deleted_stars']} stars, {data['deleted_bodies']} bodies and "
+              f"{data['deleted_stations']} stations.")
         sys.id64 = edsm_system['id64']
         sys.name = edsm_system['name']
         sys.coords = edsm_system['coords']
@@ -72,14 +96,12 @@ def fetch_system(request):
         sbodies.delete()
         sstations.delete()
         transaction.commit()
-        nstar = 0
-        nbody = 0
-        nstation = 0
 
         print("Adding stations...")
         for station in edsm_stations['stations']:
             if station['type'] == 'Fleet Carrier':
                 print("Skipping FC.")
+                data['fc_skipped'] += 1
                 continue
             print(f"Station {station['name']} with ID {station['id']}.")
             newstation = Station(id64=station['marketId'], marketId=station['marketId'], type=station['type'],
@@ -87,9 +109,10 @@ def fetch_system(request):
                                  allegiance=station['allegiance'], government=station['government'],
                                  economy=station['economy'], haveMarket=station['haveMarket'],
                                  haveShipyard=station['haveShipyard'], haveOutfitting=station['haveOutfitting'],
-                                 otherServices=station['otherServices'],updateTime=station['updateTime']['information'])
+                                 otherServices=station['otherServices'], updateTime=station['updateTime']['information'],
+                                 systemId64=edsm_system['id64'], systemName=edsm_system['name'])
             request.dbsession.add(newstation)
-            nstation += 1
+            data['added_stations'] += 1
         transaction.commit()
         for body in edsm_bodies['bodies']:
             print(f"Body {body['name']} with ID64 {body['id64']} is type {body['type']}")
@@ -108,7 +131,7 @@ def fetch_system(request):
                                axialTilt=body['axialTilt'], belts=body['belts'] if 'belts' in body else None,
                                updateTime=body['updateTime'],
                                systemId64=edsm_system['id64'], systemName=edsm_system['name'])
-                nstar += 1
+                data['added_stars'] += 1
                 request.dbsession.add(newstar)
             elif body['type'] == 'Planet':
                 newbody = Body(id64=body['id64'], bodyId=body['bodyId'], name=body['name'], type=body['type'],
@@ -124,10 +147,8 @@ def fetch_system(request):
                                rotationalPeriodTidallyLocked=body['rotationalPeriodTidallyLocked'],
                                updateTime=body['updateTime'], systemId64=edsm_system['id64'],
                                systemName=edsm_system['name'])
-                nbody += 1
+                data['added_bodies'] += 1
                 request.dbsession.add(newbody)
         transaction.commit()
         print("Operations completed.")
-        return {'status': 'Success', 'data': {'deleted_stars': scount, 'deleted_bodies': bcount,
-                                              'deleted_stations': stcount, 'added_stars': nstar,
-                                              'added_bodies': nbody, 'added_stations': nstation}}
+        return {'status': 'Success', 'data': data}
