@@ -4,9 +4,9 @@ from pyramid.view import (
     view_config,
     view_defaults
 )
-from systems_api.models import System, Permits, Carrier, Star, PopulatedSystem, Station, Body
+from systems_api.models import System, Star, PopulatedSystem, Station, Body
 import pyramid.httpexceptions as exc
-from systems_api.utils import edsm
+from ..utils import edsm
 import transaction
 
 
