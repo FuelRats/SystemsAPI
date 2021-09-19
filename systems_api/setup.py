@@ -42,7 +42,7 @@ tests_require = [
 
 setup(
     name='systems_api',
-    version='1.0.4',
+    version='1.0.5',
     description='Systems API',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
