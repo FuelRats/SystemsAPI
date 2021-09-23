@@ -4,6 +4,7 @@ from pyramid.view import (
     view_config,
     view_defaults
 )
+from sqlalchemy.exc import IntegrityError
 from systems_api.models import System, Star, PopulatedSystem, Station, Body
 import pyramid.httpexceptions as exc
 from ..utils import edsm
@@ -43,6 +44,8 @@ def fetch_system(request):
             print(f"Got system with id {sys.id64}. Fetching for canonical name {sys.name}")
             edsm_system = edsm.fetch_edsm_system_by_name(sys.name)
             print(f"Got json: {edsm_system}")
+            if not edsm_system:
+                print("System name not found, ")
             if sys.id64 != edsm_system['id64'] and 'force' not in request.params:
                 print("ERROR! The systemId64 in EDSM does not match the SAPI systemID64. This is probably bad.")
                 return {'Error': f'SystemID64 returned from EDSM does not match SAPI ID64. SAPI ID64 {sys.id64} is for '
@@ -60,9 +63,24 @@ def fetch_system(request):
             sys = System(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
                          date=datetime.datetime.utcnow())
 
-            request.dbsession.add(sys)
-            transaction.commit()
-            request.dbsession.flush()
+            try:
+                request.dbsession.add(sys)
+                transaction.commit()
+                request.dbsession.flush()
+            except IntegrityError:
+                print("Conflict! System already exists, most likely.")
+                oldsys = request.dbsession.query(System).filter(System.id64 == edsm_system['id64']).first()
+                if oldsys:
+                    print(f"System {oldsys.name} has conflicting ID64 {oldsys.id64}.")
+                    if 'force' in request.params:
+                        print("Forcing overwrite of system.")
+                        oldsys.delete()
+                        request.dbsession.flush()
+                        request.dbsession.commit()
+                        request.dbsession.flush()
+                    else:
+                        return {'error': f'System {oldsys.name} already has ID64 {oldsys.id64}. To overwrite, '
+                                         f'pass parameter "force" as true.'}
         if edsm_system['information'].get('population', 0) > 0:
             print("System is populated, update PopulatedSystem")
             data['is_populated'] = True
