@@ -57,17 +57,32 @@ def fetch_system(request):
             print(f"Json: {edsm_system}")
             print(f"Creating new system.")
             data['is_new_system'] = True
-            if edsm_system['information']['population'] > 0:
-                print("System is populated.")
-                data['is_populated'] = True
-                sys = PopulatedSystem(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
-                                      controllingFaction=edsm_system['information'], date=datetime.datetime.utcnow())
-            else:
-                sys = System(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
-                             date=datetime.datetime.utcnow())
+            sys = System(id64=edsm_system['id64'], name=edsm_system['name'], coords=edsm_system['coords'],
+                         date=datetime.datetime.utcnow())
+
             request.dbsession.add(sys)
             transaction.commit()
             request.dbsession.flush()
+        if edsm_system['information'].get('population', 0) > 0:
+            print("System is populated, update PopulatedSystem")
+            data['is_populated'] = True
+            popsys = request.dbsession.query(PopulatedSystem).filter(PopulatedSystem.name == systemName).first()
+            if popsys:
+                print("Fetched existing populated system data.")
+                popsys.name = edsm_system['name']
+                popsys.coords = edsm_system['coords']
+                popsys.controllingFaction = edsm_system['information']
+                popsys.date = datetime.datetime.utcnow()
+                transaction.commit()
+                request.dbsession.flush()
+            else:
+                print("Populated system data missing, creating...")
+                popsys = PopulatedSystem(id64=edsm_system['id64'], name=edsm_system['name'],
+                                         coords=edsm_system['coords'], controllingFaction=edsm_system['information'],
+                                         date=datetime.datetime.utcnow())
+                request.dbsession.add(popsys)
+                transaction.commit()
+                request.dbsession.flush()
 
         print("Fetching body data")
         edsm_bodies = edsm.fetch_edsm_bodies_by_id(edsm_system['id'])
@@ -85,12 +100,16 @@ def fetch_system(request):
         for row in sbodies:
             print(f"Body {row.name} with ID {row.id64} up for deletion.")
             data['deleted_bodies'] += 1
+        for row in sstations:
+            print(f"Station {row.name} with ID {row.id64} up for deletion.")
+            data['deleted_stations'] += 1
         print(f"Ready to replace {data['deleted_stars']} stars, {data['deleted_bodies']} bodies and "
               f"{data['deleted_stations']} stations.")
         sys.id64 = edsm_system['id64']
         sys.name = edsm_system['name']
         sys.coords = edsm_system['coords']
         sys.date = datetime.datetime.utcnow()
+
         request.dbsession.flush()
         sstars.delete()
         sbodies.delete()
@@ -109,7 +128,8 @@ def fetch_system(request):
                                  allegiance=station['allegiance'], government=station['government'],
                                  economy=station['economy'], haveMarket=station['haveMarket'],
                                  haveShipyard=station['haveShipyard'], haveOutfitting=station['haveOutfitting'],
-                                 otherServices=station['otherServices'], updateTime=station['updateTime']['information'],
+                                 otherServices=station['otherServices'],
+                                 updateTime=station['updateTime']['information'],
                                  systemId64=edsm_system['id64'], systemName=edsm_system['name'])
             request.dbsession.add(newstation)
             data['added_stations'] += 1
@@ -140,7 +160,8 @@ def fetch_system(request):
                                gravity=body['gravity'], earthMasses=body['earthMasses'], radius=body['radius'],
                                surfaceTemperature=body['surfaceTemperature'], volcanismType=body['volcanismType'],
                                atmosphereType=body['atmosphereType'],
-                               atmosphereComposition=body['atmosphereComposition'], solidComposition=body['solidComposition'],
+                               atmosphereComposition=body['atmosphereComposition'],
+                               solidComposition=body['solidComposition'],
                                terraformingState=body['terraformingState'], orbitalPeriod=body['orbitalPeriod'],
                                semiMajorAxis=body['semiMajorAxis'], orbitalEccentricity=body['orbitalEccentricity'],
                                argOfPeriapsis=body['argOfPeriapsis'], rotationalPeriod=body['rotationalPeriod'],
