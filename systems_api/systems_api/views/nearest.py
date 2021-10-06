@@ -44,7 +44,7 @@ def nearest_populated(request):
             system = request.dbsession.query(System).filter(System.name.ilike(request.params['name'])).one()
             x, y, z = system.coords['x'], system.coords['y'], system.coords['z']
         except NoResultFound:
-            return exc.HTTPBadRequest('System not found.')
+            return exc.HTTPNotFound('System not found.')
         except MultipleResultsFound:
             return exc.HTTPServerError('Multiple rows matching system found. Ensure system is unambiguous.')
         candidate = request.dbsession.query(PopulatedSystem).from_statement(
