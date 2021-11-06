@@ -913,6 +913,6 @@ def _construct_offsets():
 # Initialisation
 # #
 
-_init_start = time.clock()
+_init_start = time.perf_counter()
 _construct_offsets()
-_init_time = time.clock() - _init_start
+_init_time = time.perf_counter() - _init_start
