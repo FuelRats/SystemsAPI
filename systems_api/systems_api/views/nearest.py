@@ -95,7 +95,7 @@ def nearest_coords(request):
         cube = 50
 
         candidate = request.dbsession.query(System).from_statement(
-            text(f"SELECT *, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
+            text(f"SELECT systems.name, systems.coords, systems.id64, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
                  f")^2 + (cast(systems.coords->>'y' AS FLOAT) - {y}"
                  f")^2 + (cast(systems.coords->>'z' AS FLOAT) - {z}"
                  f")^2)) AS Distance FROM systems JOIN stars ON systems.id64 = stars.\"systemId64\""
