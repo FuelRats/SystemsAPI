@@ -84,7 +84,7 @@ def mecha(request):
     # Try soundex and dmetaphone matches on the name, look for low levenshtein distances.
     qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where dmetaphone(name) "
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
-    query = request.dbsession.query(System, text("lev")).from_statement(qtext).params(name=name).all()
+    query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
     for candidate in query:
         print(candidate)
         if candidate[1] < 3:
