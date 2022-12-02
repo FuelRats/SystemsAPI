@@ -238,6 +238,7 @@ def main(argv=None):
                     if proxy:
                         if time.time() > (starttime + 3600 * 24):
                             try:
+                                session = get_tm_session(session_factory, transaction.manager)
                                 startot = session.query(func.count(Star.id64)).scalar()
                                 systot = session.query(func.count(System.id64)).scalar()
                                 proxy.command("botserv", "Absolver", f"say #ratchat [\x0315SAPI\x03] Daily report: "
