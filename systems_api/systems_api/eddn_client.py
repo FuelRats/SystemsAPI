@@ -341,7 +341,8 @@ def main(argv=None):
                                             else False
                                         oldstation.haveRefuel = True if 'refuel' in data['StationServices'] \
                                             else False
-                                        oldstation.stationState = data['StationState']
+                                        oldstation.stationState = data['StationState'] if 'StationState' in data \
+                                            else None
                                         # commit changes to oldstation
                                         transaction.commit()
                                         continue
