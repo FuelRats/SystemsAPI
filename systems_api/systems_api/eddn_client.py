@@ -343,6 +343,7 @@ def main(argv=None):
                                             else False
                                         oldstation.stationState = data['StationState']
                                         # commit changes to oldstation
+                                        transaction.commit()
                                         continue
                                     else:
                                         # New station, add it!
