@@ -67,7 +67,7 @@ def nearest_populated(request):
                         stations.append({'name': station.name, 'type': station.type,
                                          'distance': station.distanceToArrival, 'hasOutfitting': station.haveOutfitting,
                                          'services': station.otherServices, 'hasShipyard': station.haveShipyard,
-                                         'hasMarket': station.haveMarket})
+                                         'hasMarket': station.haveMarket, 'StationState': station.stationState})
                     populated_systems.append({'distance': dist, 'name': cand.name,
                                               'id64': cand.id64, 'stations': stations})
             except ValueError:

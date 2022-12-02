@@ -329,6 +329,20 @@ def main(argv=None):
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
                                         filter(Station.systemName == data['StarSystem'])
                                     if oldstation:
+                                        # print(f"Updating station {data['StationName']}")
+                                        oldstation.updateTime = data['timestamp']
+                                        oldstation.systemName = data['StarSystem']
+                                        oldstation.systemId64 = data['SystemAddress']
+                                        oldstation.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                            else False
+                                        oldstation.haveOutfitting = True if 'outfitting' in data['StationServices'] \
+                                            else False
+                                        oldstation.haveMarket = True if 'commodities' in data['StationServices'] \
+                                            else False
+                                        oldstation.haveRefuel = True if 'refuel' in data['StationServices'] \
+                                            else False
+                                        oldstation.stationState = data['StationState']
+                                        # commit changes to oldstation
                                         continue
                                     else:
                                         # New station, add it!
@@ -345,7 +359,8 @@ def main(argv=None):
                                                              otherServices=data['StationServices'],
                                                              updateTime=data['timestamp'],
                                                              systemId64=data['SystemAddress'],
-                                                             systemName=data['StarSystem']
+                                                             systemName=data['StarSystem'],
+                                                             stationState=data['StationState'],
                                                              )
                                         session.add(newstation)
                                         stationcount += 1

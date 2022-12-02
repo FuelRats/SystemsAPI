@@ -26,6 +26,7 @@ class Station(Base):
     haveShipyard = Column(Boolean)
     haveOutfitting = Column(Boolean)
     otherServices = Column(JSONB)
+    stationState = Column(Text)
     updateTime = Column(DateTime)
     updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId64 = Column(BigInteger, ForeignKey('systems.id64'))
