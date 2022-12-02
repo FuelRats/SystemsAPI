@@ -361,7 +361,8 @@ def main(argv=None):
                                                              updateTime=data['timestamp'],
                                                              systemId64=data['SystemAddress'],
                                                              systemName=data['StarSystem'],
-                                                             stationState=data['StationState'],
+                                                             stationState=data['StationState'] if 'StationState' in
+                                                                                                  data else None,
                                                              )
                                         session.add(newstation)
                                         stationcount += 1
