@@ -187,7 +187,7 @@ def main(argv=None):
     settings = get_appsettings(config_uri, options=options)
     engine = get_engine(settings)
     session_factory = get_session_factory(engine)
-    #session = get_tm_session(session_factory, transaction.manager)
+    session = get_tm_session(session_factory, transaction.manager)
     if 'xml_proxy' in settings:
         serverurl = settings['xml_proxy']
         proxy = ServerProxy(serverurl)
@@ -262,7 +262,6 @@ def main(argv=None):
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
                             # print("Running stats update...")
-                            session = get_tm_session(session_factory, transaction.manager)
                             loop = asyncio.get_event_loop()
                             future = asyncio.Future()
                             asyncio.ensure_future(update_stats(session, future))
@@ -285,7 +284,6 @@ def main(argv=None):
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
-                        session = get_tm_session(session_factory, transaction.manager)
                         if data['event'] in {'Docked', 'CarrierJump'}:
                             if 'StationType' in data and data['StationType'] == 'FleetCarrier':
                                 try:
@@ -332,24 +330,27 @@ def main(argv=None):
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
                                         filter(Station.systemName == data['StarSystem'])
                                     if 'StationState' in data:
-                                        print("Got a station state update: {data['StationState']} for {data['StationName']}")
+                                        print(f"Got a station state update: {data['StationState']} for {data['StationName']}")
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
-                                        oldstation.updateTime = data['timestamp']
-                                        oldstation.systemName = data['StarSystem']
-                                        oldstation.systemId64 = data['SystemAddress']
-                                        oldstation.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                        s2=get_tm_session(session_factory, transaction.manager)
+                                        us = s2.query(Station).filter(Station.name == data['StationName']).\
+                                            filter(Station.systemName == data['StarSystem'])
+                                        us.updateTime = data['timestamp']
+                                        us.systemName = data['StarSystem']
+                                        us.systemId64 = data['SystemAddress']
+                                        us.haveShipyard = True if 'shipyard' in data['StationServices'] \
                                             else False
-                                        oldstation.haveOutfitting = True if 'outfitting' in data['StationServices'] \
+                                        us.haveOutfitting = True if 'outfitting' in data['StationServices'] \
                                             else False
-                                        oldstation.haveMarket = True if 'commodities' in data['StationServices'] \
+                                        us.haveMarket = True if 'commodities' in data['StationServices'] \
                                             else False
-                                        oldstation.haveRefuel = True if 'refuel' in data['StationServices'] \
+                                        us.haveRefuel = True if 'refuel' in data['StationServices'] \
                                             else False
                                         if 'StationState' in data:
-                                            oldstation.stationState = data['StationState']
+                                            us.stationState = data['StationState']
                                             print("Updated station state for {data['StationName']} to {data['StationState']}")
-                                        # commit changes to oldstation
+                                           # commit changes to oldstation
                                         transaction.commit()
                                     else:
                                         # New station, add it!
