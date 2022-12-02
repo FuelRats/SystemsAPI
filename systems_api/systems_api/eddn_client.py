@@ -262,6 +262,7 @@ def main(argv=None):
                                 starttime = time.time()
                         if time.time() > (lasthourly + 3600):
                             # print("Running stats update...")
+                            session = get_tm_session(session_factory, transaction.manager)
                             loop = asyncio.get_event_loop()
                             future = asyncio.Future()
                             asyncio.ensure_future(update_stats(session, future))
