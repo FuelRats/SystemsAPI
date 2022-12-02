@@ -334,7 +334,7 @@ def main(argv=None):
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
                                         s2=get_tm_session(session_factory, transaction.manager)
-                                        with s2.transaction.manager:
+                                        with s2:
                                             us = s2.query(Station).filter(Station.name == data['StationName']).\
                                                 filter(Station.systemName == data['StarSystem'])
                                             us.updateTime = data['timestamp']
@@ -352,7 +352,8 @@ def main(argv=None):
                                                 us.stationState = data['StationState']
                                                 print(f"Updated station state for {data['StationName']} to {data['StationState']}")
                                             # commit changes to oldstation
-                                            s2.transaction.commit()
+                                            s2.flush()
+                                            transaction.commit()
                                     else:
                                         # New station, add it!
                                         newstation = Station(id64=data['MarketID'], name=data['StationName'],
@@ -373,6 +374,7 @@ def main(argv=None):
                                                                                                   data else None,
                                                              )
                                         session.add(newstation)
+                                        session.flush()
                                         stationcount += 1
                                 except DataError as e:
                                     print(f"Failed to add a station! Invalid data passed: {e}")
@@ -394,6 +396,7 @@ def main(argv=None):
                                                         'z': data['StarPos'][2]}, date=data['timestamp'])
                                 try:
                                     session.add(newsys)
+                                    session.flush()
                                     transaction.commit()
                                 except DataError:
                                     print("Failed to add a system! Invalid data passed")
@@ -446,6 +449,7 @@ def main(argv=None):
                                             if r:
                                                 system = System(id64=r['id64'], name=r['name'], coords=r['coords'])
                                                 session.add(system)
+                                                session.flush()
                                                 transaction.commit()
                                         except IntegrityError:
                                             print("Failed to add system during missing star handling. Bah. Give up.")
