@@ -187,7 +187,7 @@ def main(argv=None):
     settings = get_appsettings(config_uri, options=options)
     engine = get_engine(settings)
     session_factory = get_session_factory(engine)
-    session = get_tm_session(session_factory, transaction.manager)
+    #session = get_tm_session(session_factory, transaction.manager)
     if 'xml_proxy' in settings:
         serverurl = settings['xml_proxy']
         proxy = ServerProxy(serverurl)
@@ -283,6 +283,7 @@ def main(argv=None):
                     data = __json['message']
                     messages = messages + 1
                     if 'event' in data:
+                        session = get_tm_session(session_factory, transaction.manager)
                         if data['event'] in {'Docked', 'CarrierJump'}:
                             if 'StationType' in data and data['StationType'] == 'FleetCarrier':
                                 try:
@@ -347,8 +348,7 @@ def main(argv=None):
                                             oldstation.stationState = data['StationState']
                                             print("Updated station state for {data['StationName']} to {data['StationState']}")
                                         # commit changes to oldstation
-                                        session.commit()
-                                        continue
+                                        transaction.commit()
                                     else:
                                         # New station, add it!
                                         newstation = Station(id64=data['MarketID'], name=data['StationName'],
