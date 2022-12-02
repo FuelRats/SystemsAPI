@@ -343,11 +343,11 @@ def main(argv=None):
                                             else False
                                         oldstation.haveRefuel = True if 'refuel' in data['StationServices'] \
                                             else False
-                                        oldstation.stationState = data['StationState'] if 'StationState' in data \
-                                            else None
+                                        if 'StationState' in data:
+                                            oldstation.stationState = data['StationState']
+                                            print("Updated station state for {data['StationName']} to {data['StationState']}")
                                         # commit changes to oldstation
-                                        transaction.commit()
-                                        print("Updated old station.")
+                                        session.commit()
                                         continue
                                     else:
                                         # New station, add it!
