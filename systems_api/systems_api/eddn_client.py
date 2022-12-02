@@ -334,7 +334,7 @@ def main(argv=None):
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
                                         s2=get_tm_session(session_factory, transaction.manager)
-                                        with transaction.manager:
+                                        with s2.transaction.manager:
                                             us = s2.query(Station).filter(Station.name == data['StationName']).\
                                                 filter(Station.systemName == data['StarSystem'])
                                             us.updateTime = data['timestamp']
@@ -352,7 +352,7 @@ def main(argv=None):
                                                 us.stationState = data['StationState']
                                                 print(f"Updated station state for {data['StationName']} to {data['StationState']}")
                                             # commit changes to oldstation
-                                            transaction.commit()
+                                            s2.transaction.commit()
                                     else:
                                         # New station, add it!
                                         newstation = Station(id64=data['MarketID'], name=data['StationName'],
