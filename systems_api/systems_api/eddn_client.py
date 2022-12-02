@@ -328,6 +328,8 @@ def main(argv=None):
                                     # Station data, check if exists.
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
                                         filter(Station.systemName == data['StarSystem'])
+                                    if 'StationState' in data:
+                                        print("Got a station state update: {data['StationState']} for {data['StationName']}")
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
                                         oldstation.updateTime = data['timestamp']
@@ -345,6 +347,7 @@ def main(argv=None):
                                             else None
                                         # commit changes to oldstation
                                         transaction.commit()
+                                        print("Updated old station.")
                                         continue
                                     else:
                                         # New station, add it!
