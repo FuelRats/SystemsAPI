@@ -21,6 +21,8 @@ from pyramid.paster import (
 from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
 from sqlalchemy.exc import DataError, IntegrityError
+from zope.sqlalchemy import mark_changed
+
 
 from systems_api.models import (
     get_engine,
@@ -352,6 +354,7 @@ def main(argv=None):
                                             us.stationState = data['StationState']
                                             print(f"Updated station state for {data['StationName']} to {data['StationState']}")
                                         # commit changes to oldstation
+                                        mark_changed(s2)
                                         s2.flush()
                                         transaction.commit()
                                     else:
