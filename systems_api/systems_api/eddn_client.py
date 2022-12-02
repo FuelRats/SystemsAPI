@@ -334,24 +334,25 @@ def main(argv=None):
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
                                         s2=get_tm_session(session_factory, transaction.manager)
-                                        us = s2.query(Station).filter(Station.name == data['StationName']).\
-                                            filter(Station.systemName == data['StarSystem'])
-                                        us.updateTime = data['timestamp']
-                                        us.systemName = data['StarSystem']
-                                        us.systemId64 = data['SystemAddress']
-                                        us.haveShipyard = True if 'shipyard' in data['StationServices'] \
-                                            else False
-                                        us.haveOutfitting = True if 'outfitting' in data['StationServices'] \
-                                            else False
-                                        us.haveMarket = True if 'commodities' in data['StationServices'] \
-                                            else False
-                                        us.haveRefuel = True if 'refuel' in data['StationServices'] \
-                                            else False
-                                        if 'StationState' in data:
-                                            us.stationState = data['StationState']
-                                            print("Updated station state for {data['StationName']} to {data['StationState']}")
-                                           # commit changes to oldstation
-                                        transaction.commit()
+                                        with transaction.manager:
+                                            us = s2.query(Station).filter(Station.name == data['StationName']).\
+                                                filter(Station.systemName == data['StarSystem'])
+                                            us.updateTime = data['timestamp']
+                                            us.systemName = data['StarSystem']
+                                            us.systemId64 = data['SystemAddress']
+                                            us.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                                else False
+                                            us.haveOutfitting = True if 'outfitting' in data['StationServices'] \
+                                                else False
+                                            us.haveMarket = True if 'commodities' in data['StationServices'] \
+                                                else False
+                                            us.haveRefuel = True if 'refuel' in data['StationServices'] \
+                                                else False
+                                            if 'StationState' in data:
+                                                us.stationState = data['StationState']
+                                                print(f"Updated station state for {data['StationName']} to {data['StationState']}")
+                                            # commit changes to oldstation
+                                            transaction.commit()
                                     else:
                                         # New station, add it!
                                         newstation = Station(id64=data['MarketID'], name=data['StationName'],
