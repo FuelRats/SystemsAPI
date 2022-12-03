@@ -333,29 +333,25 @@ def main(argv=None):
                                         filter(Station.systemName == data['StarSystem'])
                                     if 'StationState' in data:
                                         print(f"Got a station state update: {data['StationState']} for {data['StationName']}")
+                                        print(f"* * * * * * * * * * * * * * * * * * * * * {oldstation.name} * * * * * * * * * * * * * * * * * * *")
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
-                                        s2=get_tm_session(session_factory, transaction.manager)
-
-                                        us = s2.query(Station).filter(Station.name == data['StationName']).\
-                                            filter(Station.systemName == data['StarSystem'])
-                                        us.updateTime = data['timestamp']
-                                        us.systemName = data['StarSystem']
-                                        us.systemId64 = data['SystemAddress']
-                                        us.haveShipyard = True if 'shipyard' in data['StationServices'] \
+                                        oldstation.updateTime = data['timestamp']
+                                        oldstation.systemName = data['StarSystem']
+                                        oldstation.systemId64 = data['SystemAddress']
+                                        oldstation.haveShipyard = True if 'shipyard' in data['StationServices'] \
                                             else False
-                                        us.haveOutfitting = True if 'outfitting' in data['StationServices'] \
+                                        oldstation.haveOutfitting = True if 'outfitting' in data['StationServices'] \
                                             else False
-                                        us.haveMarket = True if 'commodities' in data['StationServices'] \
+                                        oldstation.haveMarket = True if 'commodities' in data['StationServices'] \
                                             else False
-                                        us.haveRefuel = True if 'refuel' in data['StationServices'] \
+                                        oldstation.haveRefuel = True if 'refuel' in data['StationServices'] \
                                             else False
                                         if 'StationState' in data:
-                                            us.stationState = data['StationState']
-                                            print(f"Updated station state for {data['StationName']} to {data['StationState']}")
+                                            oldstation.stationState = data['StationState']
+                                            print(f"Updated station state for {oldstation.name} to {data['StationState']}")
                                         # commit changes to oldstation
-                                        mark_changed(s2)
-                                        s2.flush()
+                                        mark_changed(session)
                                         transaction.commit()
                                     else:
                                         # New station, add it!
@@ -387,6 +383,7 @@ def main(argv=None):
                                 except IntegrityError:
                                     failstation = failstation + 1
                                     transaction.abort()
+                        transaction.commit()
 
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
