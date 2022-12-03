@@ -330,7 +330,7 @@ def main(argv=None):
                                     #print(f"Got a station: {data}")
                                     # Station data, check if exists.
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
-                                        filter(Station.systemName == data['StarSystem'])
+                                        filter(Station.systemName == data['StarSystem']).one()
                                     if 'StationState' in data:
                                         print(f"Got a station state update: {data['StationState']} for {data['StationName']}")
                                         print(f"* * * * * * * * * * * * * * * * * * * * * {oldstation.name} * * * * * * * * * * * * * * * * * * *")
