@@ -406,10 +406,11 @@ def main(argv=None):
                                 except IntegrityError:
                                     transaction.abort()
                             else:
-                                if res.systemAllegiance != data['SystemAllegiance']:
-                                    res.systemAllegiance = data['SystemAllegiance']
-                                    mark_changed(session)
-                                    transaction.commit()
+                                if 'SystemAllegiance' in data:
+                                    if res.systemAllegiance != data['SystemAllegiance']:
+                                        res.systemAllegiance = data['SystemAllegiance']
+                                        mark_changed(session)
+                                        transaction.commit()
 
                         if data['event'] == 'Scan':
                             bodyid = data['SystemAddress'] + (data['BodyID'] << 55)
