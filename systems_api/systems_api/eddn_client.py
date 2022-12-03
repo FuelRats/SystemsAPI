@@ -289,7 +289,8 @@ def main(argv=None):
                         if data['event'] in {'Docked', 'CarrierJump'}:
                             if 'StationType' in data and data['StationType'] == 'FleetCarrier':
                                 try:
-                                    oldcarrier = session.query(Carrier).filter(Carrier.callsign == data['StationName'])
+                                    oldcarrier = session.query(Carrier).filter(Carrier.callsign
+                                                                               == data['StationName']).one_or_none()
                                     # Consistency?! What's that? Bah.
                                     if oldcarrier:
                                         oldcarrier.marketId = data['MarketID']
@@ -323,7 +324,8 @@ def main(argv=None):
                                     print(f"Invalid key in carrier data: {e}")
                                     print(data)
                                     print(
-                                        f"Software: {__json['header']['softwareName']} {__json['header']['softwareVersion']}")
+                                        f"Software: {__json['header']['softwareName']} "
+                                        f"{__json['header']['softwareVersion']}")
                                     transaction.abort()
                             else:
                                 try:
@@ -331,12 +333,8 @@ def main(argv=None):
                                     # Station data, check if exists.
                                     oldstation = session.query(Station).filter(Station.name == data['StationName']).\
                                         filter(Station.systemName == data['StarSystem']).one_or_none()
-                                    if 'StationState' in data:
-                                        print(f"Got a station state update: {data['StationState']} for {data['StationName']}")
-
                                     if oldstation:
                                         # print(f"Updating station {data['StationName']}")
-                                        print(f"* * * * * * * * * * * * * * * * * * * * * {oldstation.name} * * * * * * * * * * * * * * * * * * *")
                                         oldstation.updateTime = data['timestamp']
                                         oldstation.systemName = data['StarSystem']
                                         oldstation.systemId64 = data['SystemAddress']
@@ -350,8 +348,6 @@ def main(argv=None):
                                             else False
                                         if 'StationState' in data:
                                             oldstation.stationState = data['StationState']
-                                            print(f"Updated station state for {oldstation.name} to {data['StationState']}")
-                                        # commit changes to oldstation
                                         mark_changed(session)
                                         transaction.commit()
                                     else:
@@ -389,12 +385,17 @@ def main(argv=None):
                         # TODO: Handle other detail Carrier events, such as Stats.
                         if data['event'] == 'FSDJump':
                             id64 = data['SystemAddress']
-                            res = session.query(System.id64).filter(System.id64 == id64).scalar() or False
+                            res = None
+                            if 'SystemAllegiance' in data:
+                                res = session.query(System.id64).filter(System.id64 == id64).one_or_none()
+                            else:
+                                res = session.query(System.id64).filter(System.id64 == id64).scalar()
                             if not res:
                                 syscount = syscount + 1
                                 newsys = System(id64=data['SystemAddress'], name=data['StarSystem'],
                                                 coords={'x': data['StarPos'][0], 'y': data['StarPos'][1],
-                                                        'z': data['StarPos'][2]}, date=data['timestamp'])
+                                                        'z': data['StarPos'][2]}, date=data['timestamp'],
+                                                systemAllegiance=data['SystemAllegiance'])
                                 try:
                                     session.add(newsys)
                                     session.flush()
@@ -404,6 +405,11 @@ def main(argv=None):
                                     transaction.abort()
                                 except IntegrityError:
                                     transaction.abort()
+                            else:
+                                if res.systemAllegiance != data['SystemAllegiance']:
+                                    res.systemAllegiance = data['SystemAllegiance']
+                                    mark_changed(session)
+                                    transaction.commit()
 
                         if data['event'] == 'Scan':
                             bodyid = data['SystemAddress'] + (data['BodyID'] << 55)

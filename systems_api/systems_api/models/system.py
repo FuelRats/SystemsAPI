@@ -20,6 +20,7 @@ class System(Base):
     coords = Column(JSONB)
     date = Column(DateTime)
     date.info.update({'pyramid_jsonapi': {'visible': False}})
+    systemAllegiance = Column(Text)
     planets = relationship("Body")
     stars = relationship("Star")
     stations = relationship("Station")
