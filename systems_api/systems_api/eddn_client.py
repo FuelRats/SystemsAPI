@@ -387,7 +387,7 @@ def main(argv=None):
                             id64 = data['SystemAddress']
                             res = None
                             if 'SystemAllegiance' in data:
-                                res = session.query(System.id64).filter(System.id64 == id64).one_or_none()
+                                res = session.query(System).filter(System.id64 == id64).one_or_none()
                             else:
                                 res = session.query(System.id64).filter(System.id64 == id64).scalar()
                             if not res:
