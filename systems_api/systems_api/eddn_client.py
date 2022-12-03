@@ -395,7 +395,8 @@ def main(argv=None):
                                 newsys = System(id64=data['SystemAddress'], name=data['StarSystem'],
                                                 coords={'x': data['StarPos'][0], 'y': data['StarPos'][1],
                                                         'z': data['StarPos'][2]}, date=data['timestamp'],
-                                                systemAllegiance=data['SystemAllegiance'])
+                                                systemAllegiance=data['SystemAllegiance'] if 'SystemAllegiance' in data
+                                                else None)
                                 try:
                                     session.add(newsys)
                                     session.flush()
@@ -407,10 +408,9 @@ def main(argv=None):
                                     transaction.abort()
                             else:
                                 if 'SystemAllegiance' in data:
-                                    if res.systemAllegiance != data['SystemAllegiance']:
-                                        res.systemAllegiance = data['SystemAllegiance']
-                                        mark_changed(session)
-                                        transaction.commit()
+                                    res.systemAllegiance = data['SystemAllegiance']
+                                    mark_changed(session)
+                                    transaction.commit()
 
                         if data['event'] == 'Scan':
                             bodyid = data['SystemAddress'] + (data['BodyID'] << 55)
