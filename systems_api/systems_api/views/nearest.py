@@ -63,13 +63,40 @@ def nearest_populated(request):
                 stations = []
                 station_query = request.dbsession.query(Station).filter(Station.systemId64 == cand.id64)
                 if station_query:
+                    tagAbandoned=False
+
+                    # Check the System Allegiance in Systems model for whether the system has been Thargoid attacked.
+                    sysallegiance = request.dbsession.query(System.systemAllegiance). \
+                        filter(System.id64 == cand.id64).one_or_none()
+
+                    # Set the tagAbandoned flag to True if the system is Thargoid owned
+                    tagAbandoned = False
+                    if sysallegiance and sysallegiance[0] == 'Thargoid':
+                        tagAbandoned = True
+
+                    # Append information about each station in the system to the stations list
+                    stations = []
                     for station in station_query:
-                        stations.append({'name': station.name, 'type': station.type,
-                                         'distance': station.distanceToArrival, 'hasOutfitting': station.haveOutfitting,
-                                         'services': station.otherServices, 'hasShipyard': station.haveShipyard,
-                                         'hasMarket': station.haveMarket, 'StationState': station.stationState})
-                    populated_systems.append({'distance': dist, 'name': cand.name,
-                                              'id64': cand.id64, 'stations': stations})
+                        stations.append({
+                            'name': station.name,
+                            'type': station.type,
+                            'distance': station.distanceToArrival,
+                            'hasOutfitting': station.haveOutfitting,
+                            'services': station.otherServices,
+                            'hasShipyard': station.haveShipyard,
+                            'hasMarket': station.haveMarket,
+                            'StationState': station.stationState if not tagAbandoned else 'Abandoned',
+                        })
+
+                    # Append information about the system to the populated_systems list
+                    populated_systems.append({
+                        'distance': dist,
+                        'name': cand.name,
+                        'id64': cand.id64,
+                        'stations': stations,
+                        'allegiance': sysallegiance[0] if sysallegiance else None,
+                    })
+
             except ValueError:
                 print(
                     f"Value error: Failed for {cand.coords['x']}, {cand.coords['y']}, {cand.coords['z']}")
