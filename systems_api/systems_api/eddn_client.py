@@ -20,7 +20,7 @@ from pyramid.paster import (
 
 from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
-from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError, StaleDataError
 from zope.sqlalchemy import mark_changed
 
 
@@ -378,6 +378,10 @@ def main(argv=None):
                                 except KeyError as e:
                                     print(f"Invalid key in station data: {e}")
                                 except IntegrityError:
+                                    failstation = failstation + 1
+                                    transaction.abort()
+                                except StaleDataError:
+                                    print(f"Stale data error, skipping this update for {data['StationName']}")
                                     failstation = failstation + 1
                                     transaction.abort()
                         transaction.commit()
