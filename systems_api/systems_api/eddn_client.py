@@ -20,7 +20,8 @@ from pyramid.paster import (
 
 from pyramid.scripts.common import parse_vars
 from sqlalchemy import func
-from sqlalchemy.exc import DataError, IntegrityError, StaleDataError
+from sqlalchemy.exc import DataError, IntegrityError
+from sqlalchemy.orm.exc import StaleDataError
 from zope.sqlalchemy import mark_changed
 
 
