@@ -24,10 +24,10 @@ def nearest_populated(request):
     system = System()
     limit = 10
     if 'limit' in request.params:
-        if int(request.params['limit']) > 100:
+        limit = abs(int(request.params['limit']))
+        if limit > 100:
             limit = 100
-        else:
-            limit = abs(int(request.params['limit']))
+
     if 'systemid64' in request.params:
         try:
             system = request.dbsession.query(System).filter(System.id64 == request.params['systemid64']).one()
@@ -85,7 +85,7 @@ def nearest_populated(request):
                             'services': station.otherServices,
                             'hasShipyard': station.haveShipyard,
                             'hasMarket': station.haveMarket,
-                            'StationState': station.stationState if not tagAbandoned else 'Abandoned',
+                            'stationState': station.stationState if not tagAbandoned else 'Abandoned',
                         })
 
                     # Append information about the system to the populated_systems list
@@ -118,9 +118,12 @@ def nearest_coords(request):
         return exc.HTTPBadRequest('Missing X, Y or Z coordinate for search.')
     try:
         x, y, z = float(request.params['x']), float(request.params['y']), float(request.params['z'])
-        system = System()
+    except ValueError:
+        return exc.HTTPBadRequest('Malformed request data.')
+    try:
         cube = 50
-
+        # Please, for the love of god, don't touch it thinking you can 'fix it'. It works. It's ugly, but it works.
+        # If you touch it, YOU WILL BREAK IT. I will not be held responsible for your actions.
         candidate = request.dbsession.query(System).from_statement(
             text(f"SELECT systems.name, systems.coords, systems.id64, (sqrt((cast(systems.coords->>'x' AS FLOAT) - {x}"
                  f")^2 + (cast(systems.coords->>'y' AS FLOAT) - {y}"
@@ -134,11 +137,11 @@ def nearest_coords(request):
         b = numpy.array((candidate.coords['x'], candidate.coords['y'], candidate.coords['z']))
         dist = numpy.linalg.norm(a - b)
 
-        return {'meta': {'name': system.name, 'type': 'nearest_coords'},
+        return {'meta': {'name': candidate.name, 'type': 'nearest_coords'},
                 'data': {'distance': dist, 'name': candidate.name, 'id64': candidate.id64}}
 
     except NoResultFound:
-        return {'meta': {'name': system.name, 'type': 'nearest_scoopable'},
+        return {'meta': {'name': candidate.name, 'type': 'nearest_scoopable'},
                 'error': 'No scoopable systems found.'}
     except ValueError:
         return exc.HTTPBadRequest('Malformed request data.')
