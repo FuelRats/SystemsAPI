@@ -2,7 +2,7 @@ from pyramid.view import (
     view_config,
     view_defaults
 )
-from sqlalchemy import text, func
+from sqlalchemy import text, func, column
 from ..models import System, Permits
 import pyramid.httpexceptions as exc
 from ..utils.util import checkpermitname, resultstocandidates
@@ -84,7 +84,7 @@ def mecha(request):
     # Try soundex and dmetaphone matches on the name, look for low levenshtein distances.
     qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where dmetaphone(name) "
                  "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
-    query = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
+    query = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
     for candidate in query:
         print(candidate)
         if candidate[1] < 3:
@@ -111,7 +111,7 @@ def mecha(request):
     # Try a GIN trigram similarity search on the entire database. Slow as hell.
     qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
                  " ORDER BY lev DESC LIMIT 10")
-    pmatch = request.dbsession.query(System, text("lev")).from_statement(qtext).params(name=name).all()
+    pmatch = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
     try:
         if pmatch.count() > 0:
             for candidate in pmatch:
