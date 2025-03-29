@@ -3,7 +3,8 @@ from sqlalchemy import (
     BigInteger,
     Text,
     DateTime,
-    Index
+    Index,
+    Boolean
 )
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -18,6 +19,7 @@ class PopulatedSystem(Base):
     coords = Column(JSONB, doc="System coordinates, as a JSON blob with X,Y and Z coordinates as floats.")
     controllingFaction = Column(JSONB, doc="Controlling faction, in a JSON blob")
     date = Column(DateTime, doc="DateTime of last update to this system")
+    legacy = Column(Boolean, doc="Is this system present in legacy mode?")
     date.info.update({'pyramid_jsonapi': {'visible': False}})
 
 
