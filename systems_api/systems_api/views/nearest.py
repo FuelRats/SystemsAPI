@@ -23,11 +23,14 @@ def nearest_populated(request):
     x, y, z = 0.0, 0.0, 0.0
     system = System()
     limit = 10
+    exclude_colonies = False
+    
     if 'limit' in request.params:
         limit = abs(int(request.params['limit']))
         if limit > 100:
             limit = 100
-
+    if 'exclude_colonies' in request.params:
+        exclude_colonies = True
     if 'systemid64' in request.params:
         try:
             system = request.dbsession.query(System).filter(System.id64 == request.params['systemid64']).one()
@@ -64,6 +67,7 @@ def nearest_populated(request):
                 station_query = request.dbsession.query(Station).filter(Station.systemId64 == cand.id64)
                 if station_query:
                     tagAbandoned=False
+                    skip_system = False
 
                     # Check the System Allegiance in Systems model for whether the system has been Thargoid attacked.
                     sysallegiance = request.dbsession.query(System.systemAllegiance). \
@@ -74,28 +78,36 @@ def nearest_populated(request):
                     if sysallegiance and sysallegiance[0] == 'Thargoid':
                         tagAbandoned = True
 
-                    # Append information about each station in the system to the stations list
-                    stations = []
-                    for station in station_query:
-                        stations.append({
-                            'name': station.name,
-                            'type': station.type,
-                            'distance': station.distanceToArrival,
-                            'hasOutfitting': station.haveOutfitting,
-                            'services': station.otherServices,
-                            'hasShipyard': station.haveShipyard,
-                            'hasMarket': station.haveMarket,
-                            'stationState': station.stationState if not tagAbandoned else 'Abandoned',
-                        })
+                    # Check for colonies first if we need to exclude them
+                    if exclude_colonies:
+                        for station in station_query:
+                            if station.stationState == 'Colony':
+                                skip_system = True
+                                break
 
-                    # Append information about the system to the populated_systems list
-                    populated_systems.append({
-                        'distance': dist,
-                        'name': cand.name,
-                        'id64': cand.id64,
-                        'stations': stations,
-                        'allegiance': sysallegiance[0] if sysallegiance else None,
-                    })
+                    if not skip_system:
+                        # Append information about each station in the system to the stations list
+                        stations = []
+                        for station in station_query:
+                            stations.append({
+                                'name': station.name,
+                                'type': station.type,
+                                'distance': station.distanceToArrival,
+                                'hasOutfitting': station.haveOutfitting,
+                                'services': station.otherServices,
+                                'hasShipyard': station.haveShipyard,
+                                'hasMarket': station.haveMarket,
+                                'stationState': station.stationState if not tagAbandoned else 'Abandoned',
+                            })
+
+                        # Append information about the system to the populated_systems list
+                        populated_systems.append({
+                            'distance': dist,
+                            'name': cand.name,
+                            'id64': cand.id64,
+                            'stations': stations,
+                            'allegiance': sysallegiance[0] if sysallegiance else None,
+                        })
 
             except ValueError:
                 print(
