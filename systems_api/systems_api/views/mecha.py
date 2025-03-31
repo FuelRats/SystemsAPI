@@ -32,18 +32,18 @@ def mecha(request):
     for system in permsystems:
         perm_systems.append(system.id64)
 
-    if len(name) < 3:
-        # Too short for trigram searches. Either return an exact match, or fail.
-        query = request.dbsession.query(System).filter(System.name == name)
-        for candidate in query:
-            candidates.append({'name': candidate.name, 'similarity': 1,
-                               'id64': candidate.id64, 'coords': candidate.coords,
-                               'permit_required': True if candidate.id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
-                               })
+    # Check for immediate match, case sensitive.
+    query = request.dbsession.query(System).filter(System.name == name)
+    for candidate in query:
+        candidates.append({'name': candidate.name, 'similarity': 1,
+                           'id64': candidate.id64, 'coords': candidate.coords,
+                           'permit_required': True if candidate.id64 in perm_systems else False,
+                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
+                           })
         if len(candidates) > 0:
             return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
-        else:
+
+    if len(name) < 3: # Too short for trigram searches. Either return an exact match, or fail.
             return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
 
     # Prevent SAPI from choking on a search that contains just a PG sector's mass code.
@@ -67,9 +67,18 @@ def mecha(request):
                          'type': 'notfound'}}
     if is_pg_system_name(name):
         # If the system is a PGName, don't try soundex and dmeta first, as they are most likely to fail.
-        qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
-                     " ORDER BY lev DESC LIMIT 10")
-        pmatch = request.dbsession.query(System, "lev").from_statement(qtext).params(name=name).all()
+        qtext = text("""
+                     SET LOCAL work_mem = '100MB';
+                     SELECT *, similarity(name, :name) as lev
+                     FROM systems
+                     WHERE lower(name) LIKE lower(:prefix)
+                     ORDER BY name <-> :name
+                     LIMIT 10
+                     """)
+        pmatch = request.dbsession.query(System, column("lev")).from_statement(qtext).params(
+            name=name,
+            prefix=f"{name}%"
+        ).all()
         for candidate in pmatch:
             # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
@@ -82,8 +91,27 @@ def mecha(request):
         if len(candidates) > 1:
             return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': candidates}
     # Try soundex and dmetaphone matches on the name, look for low levenshtein distances.
-    qtext = text("select *, levenshtein(lower(name), lower(:name)) as lev from systems where dmetaphone(name) "
-                 "= dmetaphone(:name) OR soundex(name) = soundex(:name) order by lev limit 10")
+    qtext = text("""
+                 SET LOCAL work_mem = '100MB';
+                 WITH soundex_matches AS (
+                     SELECT id64, name, levenshtein(lower(name), lower(:name)) as lev
+                     FROM systems 
+                     WHERE soundex(name) = soundex(:name)
+                     AND levenshtein(lower(name), lower(:name)) < 3
+                 ),
+                 dmetaphone_matches AS (
+                     SELECT id64, name, levenshtein(lower(name), lower(:name)) as lev
+                     FROM systems 
+                     WHERE dmetaphone(name) = dmetaphone(:name)
+                     AND levenshtein(lower(name), lower(:name)) < 3
+                     AND id64 NOT IN (SELECT id64 FROM soundex_matches)
+                 )
+                 SELECT * FROM soundex_matches
+                 UNION ALL
+                 SELECT * FROM dmetaphone_matches
+                 ORDER BY lev
+                 LIMIT 10
+                 """)
     query = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
     for candidate in query:
         print(candidate)
@@ -109,11 +137,16 @@ def mecha(request):
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
     # Try a GIN trigram similarity search on the entire database. Slow as hell.
-    qtext = text("select *, similarity(lower(name), lower(:name)) as lev from systems where name % :name"
-                 " ORDER BY lev DESC LIMIT 10")
+    qtext = text("""
+                 SELECT *, similarity(name, :name) as lev
+                 FROM systems
+                 WHERE name % :name
+                 ORDER BY similarity(name, :name) DESC
+                 LIMIT 10
+                 """)
     pmatch = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
     try:
-        if pmatch.count() > 0:
+        if pmatch:
             for candidate in pmatch:
                 # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
                 candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
