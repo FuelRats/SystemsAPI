@@ -35,6 +35,9 @@ def search(request):
 
     query = text("""
                  SET LOCAL work_mem = '100MB';
+                 SET LOCAL statement_timeout = 5000ms;
+                 SET LOCAL max_parallel_workers = 4;
+                 SET LOCAL max_parallel_workers_per_gather = 4;
                  SELECT name
                  FROM systems
                  WHERE lower(name) LIKE lower(:prefix)
