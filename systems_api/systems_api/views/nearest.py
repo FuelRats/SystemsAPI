@@ -60,7 +60,7 @@ def nearest_populated(request):
         populated_systems = []
         permit_systems = []
         permsystems = request.dbsession.query(Permits).all()
-        perm_systems = {ps.id64: ps.name for ps in permsystems}
+        perm_systems = {ps.id64: ps.permit_name for ps in permsystems}
         for cand in candidate:
             try:
                 a = numpy.array((x, y, z))
