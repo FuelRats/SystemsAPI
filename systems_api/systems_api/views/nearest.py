@@ -58,6 +58,9 @@ def nearest_populated(request):
                  f")^2 + (cast(populated_systems.coords->>'z' AS FLOAT) - {z}"
                  f")^2)) as Distance from populated_systems {legacy_filter} order by Distance LIMIT {limit}")).all()
         populated_systems = []
+        permit_systems = []
+        permsystems = request.dbsession.query(Permits).all()
+        perm_systems = {ps.id64: ps.name for ps in permsystems}
         for cand in candidate:
             try:
                 a = numpy.array((x, y, z))
@@ -102,13 +105,22 @@ def nearest_populated(request):
                         'allegiance': sysallegiance[0] if sysallegiance else None,
                     })
 
+                    if cand.id64 in perm_systems:
+                        permit_systems.append({
+                            'id64': cand.id64,
+                            'name': perm_systems[cand.id64]
+                        })
+
             except ValueError:
                 print(
                     f"Value error: Failed for {cand.coords['x']}, {cand.coords['y']}, {cand.coords['z']}")
-        meta = {'name': system.name, 'type': 'nearest_populated'}
-        if legacy:
-            meta['legacy'] = True
-        return {'meta': meta, 'data': populated_systems}
+        # Only include perm_systems if there are any populated systems that require a permit.
+        if len(permit_systems) > 0:
+            return {'meta': {'name': system.name, 'type': 'nearest_populated', 'perm_systems': permit_systems},
+                    'data': populated_systems}
+        else:
+            return {'meta': {'name': system.name, 'type': 'nearest_populated'},
+                    'data': populated_systems}
     else:
         return exc.HTTPBadRequest('Missing required parameter (name or systemid64')
 
