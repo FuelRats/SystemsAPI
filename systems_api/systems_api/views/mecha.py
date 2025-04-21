@@ -19,149 +19,123 @@ pg_system_regex = re.compile(r"^" + pg_system_regex_str + r"$")
 @view_config(route_name='mecha', renderer='json')
 def mecha(request):
     """
-    Mecha dedicated endpoint that tries to be smrt about searching.
-    :param request: The Pyramid request object
-    :return: A JSON response
+    Optimized Mecha endpoint focusing on fastest returns for precise matches.
     """
     if 'name' not in request.params:
         return exc.HTTPBadRequest(detail="Missing 'name' parameter.")
-    name = unquote(request.params['name'])
-    candidates = []
-    permsystems = request.dbsession.query(Permits)
-    perm_systems = []
-    for system in permsystems:
-        perm_systems.append(system.id64)
 
-    # Check for immediate match, case sensitive.
-    query = request.dbsession.query(System).filter(System.name == name)
-    for candidate in query:
-        candidates.append({'name': candidate.name, 'similarity': 1,
-                           'id64': candidate.id64, 'coords': candidate.coords,
-                           'permit_required': True if candidate.id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
-                           })
-        if len(candidates) > 0:
-            return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+    name = unquote(request.params['name']).strip()
+    if len(name) < 3:
+        return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
 
-    if len(name) < 3: # Too short for trigram searches. Either return an exact match, or fail.
-            return exc.HTTPBadRequest(detail="Search term too short (Minimum 3 characters)")
+    lname = name.lower()
+    permsystems = request.dbsession.query(Permits).all()
+    perm_systems = {system.id64 for system in permsystems}
 
-    # Prevent SAPI from choking on a search that contains just a PG sector's mass code.
-    m = pg_system_regex.match(name.strip())
-    if m:
-        return {'meta': {'error': 'Incomplete PG system name.',
-            'type': 'incomplete_name'}}
+    # Case-sensitive exact match
+    exact_match = request.dbsession.query(System).filter(System.name == name).first()
+    if exact_match:
+        return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': [{
+            'name': exact_match.name,
+            'similarity': 1,
+            'id64': exact_match.id64,
+            'coords': exact_match.coords,
+            'permit_required': exact_match.id64 in perm_systems,
+            'permit_name': checkpermitname(exact_match.id64, permsystems, perm_systems)
+        }]}
 
-    # Check for immediate match, case insensitive.
-    query = request.dbsession.query(System).filter(System.name.ilike(name))
-    for candidate in query:
-        candidates.append({'name': candidate.name, 'similarity': 1,
-                           'id64': candidate.id64, 'coords': candidate.coords,
-                           'permit_required': True if candidate.id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate.id64, permsystems, perm_systems)
-                           })
-    if len(candidates) > 0:
-        return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+    # Case-insensitive exact match
+    ci_match = request.dbsession.query(System).filter(func.lower(System.name) == lname).first()
+    if ci_match:
+        return {'meta': {'name': name, 'type': 'Case-insensitive match'}, 'data': [{
+            'name': ci_match.name,
+            'similarity': 1,
+            'id64': ci_match.id64,
+            'coords': ci_match.coords,
+            'permit_required': ci_match.id64 in perm_systems,
+            'permit_name': checkpermitname(ci_match.id64, permsystems, perm_systems)
+        }]}
+
     if 'fast' in request.params:
         return {'meta': {'error': 'System not found. Query again without fast flag for in-depth search.',
                          'type': 'notfound'}}
+
+    # PG system handling
+    if pg_system_regex.match(name):
+        return {'meta': {'error': 'Incomplete PG system name.', 'type': 'incomplete_name'}}
+
     if is_pg_system_name(name):
-        # If the system is a PGName, don't try soundex and dmeta first, as they are most likely to fail.
         qtext = text("""
-                     SET LOCAL work_mem = '100MB';
-                     SELECT *, similarity(name, :name) as lev
-                     FROM systems
-                     WHERE lower(name) LIKE lower(:prefix)
-                     ORDER BY name <-> :name
-                     LIMIT 10
-                     """)
-        pmatch = request.dbsession.query(System, column("lev")).from_statement(qtext).params(
-            name=name,
-            prefix=f"{name}%"
+            SET LOCAL work_mem = '100MB';
+            SELECT *, similarity(name, :name) as lev
+            FROM systems
+            WHERE lower(name) LIKE :prefix
+            ORDER BY name <-> :name
+            LIMIT 10
+        """)
+        results = request.dbsession.query(System, column('lev')).from_statement(qtext).params(
+            name=lname, prefix=f"{lname}%"
         ).all()
-        for candidate in pmatch:
-            # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
-            candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                               'id64': candidate[0].id64, 'coords': candidate[0].coords,
-                               'permit_required': True if candidate[0].id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                               })
-            if len(candidates) > 10:
-                break
-        if len(candidates) > 1:
-            return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': candidates}
-    # Try soundex and dmetaphone matches on the name, look for low levenshtein distances.
+        if results:
+            return {'meta': {'name': name, 'type': 'pg_trgm'}, 'data': [
+                {'name': c[0].name, 'similarity': c[1],
+                 'id64': c[0].id64, 'coords': c[0].coords,
+                 'permit_required': c[0].id64 in perm_systems,
+                 'permit_name': checkpermitname(c[0].id64, permsystems, perm_systems)}
+                for c in results
+            ]}
+
+    # Soundex and DMetaphone matches
     qtext = text("""
-                 SET LOCAL work_mem = '100MB';
-                 WITH soundex_matches AS (
-                     SELECT id64, name, levenshtein(lower(name), lower(:name)) as lev
-                     FROM systems 
-                     WHERE soundex(name) = soundex(:name)
-                     AND levenshtein(lower(name), lower(:name)) < 3
-                 ),
-                 dmetaphone_matches AS (
-                     SELECT id64, name, levenshtein(lower(name), lower(:name)) as lev
-                     FROM systems 
-                     WHERE dmetaphone(name) = dmetaphone(:name)
-                     AND levenshtein(lower(name), lower(:name)) < 3
-                     AND id64 NOT IN (SELECT id64 FROM soundex_matches)
-                 )
-                 SELECT * FROM soundex_matches
-                 UNION ALL
-                 SELECT * FROM dmetaphone_matches
-                 ORDER BY lev
-                 LIMIT 10
-                 """)
-    query = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
-    for candidate in query:
-        print(candidate)
-        if candidate[1] < 3:
-            candidates.append({'name': candidate[0].name, 'distance': candidate[1],
-                               'id64': candidate[0].id64, 'coords': candidate[0].coords,
-                               'permit_required': True if candidate[0].id64 in perm_systems else False,
-                               'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                               })
-    if len(candidates) > 0:
-        return {'meta': {'name': name, 'type': 'dmeta+soundex'}, 'data': candidates}
-    # Try an ILIKE with wildcard on end. Slower.
-    query = request.dbsession.query(System, func.similarity(System.name, name).label('similarity')).\
-        filter(System.name.ilike(name+"%")).limit(5000).from_self().order_by(func.similarity(System.name, name).desc())
-    for candidate in query:
-        candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                           'id64': candidate[0].id64, 'coords': candidate[0].coords,
-                           'permit_required': True if candidate[0].id64 in perm_systems else False,
-                           'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                           })
-        if len(candidates) > 10:
-            break
-    if len(candidates) > 0:
-        return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
-    # Try a GIN trigram similarity search on the entire database. Slow as hell.
+        SET LOCAL work_mem = '100MB';
+        WITH matches AS (
+            SELECT id64, name, levenshtein(lower(name), :lname) as lev
+            FROM systems
+            WHERE soundex(name) = soundex(:name) OR dmetaphone(name) = dmetaphone(:name)
+            ORDER BY lev ASC
+            LIMIT 10
+        ) SELECT * FROM matches WHERE lev < 3;
+    """)
+    results = request.dbsession.query(System, column('lev')).from_statement(qtext).params(name=name, lname=lname).all()
+    if results:
+        return {'meta': {'name': name, 'type': 'phonetic'}, 'data': [
+            {'name': c[0].name, 'distance': c[1],
+             'id64': c[0].id64, 'coords': c[0].coords,
+             'permit_required': c[0].id64 in perm_systems,
+             'permit_name': checkpermitname(c[0].id64, permsystems, perm_systems)}
+            for c in results
+        ]}
+
+    # Wildcard ILIKE search
+    wildcard_results = request.dbsession.query(System, func.similarity(System.name, name).label('sim')).\
+        filter(func.lower(System.name).like(f"{lname}%")).order_by(func.similarity(System.name, name).desc()).limit(10).all()
+
+    if wildcard_results:
+        return {'meta': {'name': name, 'type': 'wildcard'}, 'data': [
+            {'name': c[0].name, 'similarity': c[1],
+             'id64': c[0].id64, 'coords': c[0].coords,
+             'permit_required': c[0].id64 in perm_systems,
+             'permit_name': checkpermitname(c[0].id64, permsystems, perm_systems)}
+            for c in wildcard_results
+        ]}
+
+    # Final trigram search as fallback
     qtext = text("""
-                 SELECT *, similarity(name, :name) as lev
-                 FROM systems
-                 WHERE name % :name
-                 ORDER BY similarity(name, :name) DESC
-                 LIMIT 10
-                 """)
-    pmatch = request.dbsession.query(System, column("lev")).from_statement(qtext).params(name=name).all()
-    try:
-        if pmatch:
-            for candidate in pmatch:
-                # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
-                candidates.append({'name': candidate[0].name, 'similarity': candidate[1],
-                                   'id64': candidate[0].id64, 'coords': candidate[0].coords,
-                                   'permit_required': True if candidate[0].id64 in perm_systems else False,
-                                   'permit_name': checkpermitname(candidate[0].id64, permsystems, perm_systems)
-                                   })
-                if len(candidates) > 10:
-                    break
-    except TypeError:
-        # pmatch.count() isn't set, this is bad.
-        return {'meta': {'error': 'System not found.',
-            'type': 'no_dbrows'}}
-    if len(candidates) < 1:
-        # We ain't got shit. Give up.
-        return {'meta': {'error': 'System not found.',
-            'type': 'notfound'}}
-    return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': candidates}
+        SELECT *, similarity(name, :name) as lev
+        FROM systems
+        WHERE name % :name
+        ORDER BY lev DESC
+        LIMIT 10
+    """)
+    results = request.dbsession.query(System, column('lev')).from_statement(qtext).params(name=name).all()
+
+    if results:
+        return {'meta': {'name': name, 'type': 'gin_trgm'}, 'data': [
+            {'name': c[0].name, 'similarity': c[1],
+             'id64': c[0].id64, 'coords': c[0].coords,
+             'permit_required': c[0].id64 in perm_systems,
+             'permit_name': checkpermitname(c[0].id64, permsystems, perm_systems)}
+            for c in results
+        ]}
+
+    return {'meta': {'error': 'System not found.', 'type': 'notfound'}}
