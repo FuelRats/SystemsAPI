@@ -30,7 +30,7 @@ def mecha(request):
 
     lname = name.lower()
     permsystems = request.dbsession.query(Permits).all()
-    perm_systems = {system.id64 for system in permsystems}
+    perm_systems = [system.id64 for system in permsystems]
 
     # Case-sensitive exact match
     exact_match = request.dbsession.query(System).filter(System.name == name).first()
