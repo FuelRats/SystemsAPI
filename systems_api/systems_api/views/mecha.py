@@ -45,7 +45,11 @@ def mecha(request):
         }]}
 
     # Case-insensitive exact match
-    ci_match = request.dbsession.query(System).filter(func.lower(System.name) == lname).first()
+    ci_match = request.dbsession.query(System) \
+        .filter(text("LOWER(name) = :lname")) \
+        .params(lname=lname) \
+        .first()
+
     if ci_match:
         return {'meta': {'name': name, 'type': 'Case-insensitive match'}, 'data': [{
             'name': ci_match.name,
