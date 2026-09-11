@@ -64,8 +64,20 @@ def jenkins32(key):
 def checkpermitname(system, permsystems, perms):
     if system not in perms:
         return None
-    if permsystems.get(system).permit_name is not None:
-        return permsystems.get(system).permit_name
+
+    # If perms is a dictionary (like in nearest.py), use get method
+    if isinstance(perms, dict):
+        return perms.get(system)
+
+    # If perms is a list (like in search.py), find the permit name
+    # by matching the system ID in the list
+    for permit_id in perms:
+        if permit_id == system:
+            # Find the corresponding system in permsystems
+            for ps in permsystems:
+                if ps.id64 == system:
+                    return ps.permit_name
+
     return None
 
 
