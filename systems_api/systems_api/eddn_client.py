@@ -381,10 +381,51 @@ def main(argv=None):
                                 except IntegrityError:
                                     failstation = failstation + 1
                                     transaction.abort()
-                                except StaleDataError:
-                                    print(f"Stale data error, skipping this update for {data['StationName']}")
-                                    failstation = failstation + 1
-                                    transaction.abort()
+                                except StaleDataError as e:
+                                    print(f"Stale data error for {data['StationName']} in system {data['StarSystem']}: {str(e)}")
+
+                                    if "expected to update" in str(e) and "were matched" in str(e):
+                                        try:
+                                            duplicates = session.query(Station).filter(
+                                                Station.name == data['StationName'],
+                                                Station.systemName == data['StarSystem']
+                                            ).all()
+
+                                            if duplicates and len(duplicates) > 1:
+                                                print(f"Found {len(duplicates)} duplicate stations with name '{data['StationName']}' in system '{data['StarSystem']}'")
+
+                                                newest = None
+                                                newest_time = None
+
+                                                for dup in duplicates:
+                                                   if newest is None or (dup.updateTime and (newest_time is None or dup.updateTime > newest_time)):
+                                                      newest = dup
+                                                      newest_time = dup.updateTime
+
+                                                for dup in duplicates:
+                                                   if dup != newest:
+                                                       session.delete(dup)
+
+                                                newest.updateTime = data['timestamp']
+                                                newest.systemId64 = data['SystemAddress']
+                                                newest.haveShipyard = True if 'shipyard' in data['StationServices'] else False
+                                                newest.haveOutfitting = True if 'outfitting' in data['StationServices'] else False
+                                                newest.haveMarket = True if 'commodities' in data['StationServices'] else False
+                                                newest.haveRefuel = True if 'refuel' in data['StationServices'] else False
+                                                newest.type = data['StationType'] if 'StationType' in data else False
+                                                if 'StationState' in data:
+                                                    newest.stationState = data['StationState']
+
+                                                mark_changed(session)
+                                                transaction.commit()
+                                                print(f"Successfully deduplicated station '{data['StationName']}' - kept newest record and deleted {len(duplicates)-1} duplicates")
+                                                continue
+
+                                        except Exception as inner_e:
+                                            print(f"Error during station deduplication: {str(inner_e)}")
+
+                                            failstation = failstation + 1
+                                            transaction.abort()
                         transaction.commit()
 
                         # TODO: Handle other detail Carrier events, such as Stats.
