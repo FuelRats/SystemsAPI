@@ -11,7 +11,9 @@ import psycopg2
 def generate_heatmap(dbsession, env):
     global conn
     try:
-        conn = psycopg2.connect(host="192.168.100.10", database="fuelratsapi", user="fuelrats")
+        dsn = env['registry'].settings.get(
+            'rescue_db_dsn', 'host=127.0.0.1 dbname=fuelratsapi user=fuelrats')
+        conn = psycopg2.connect(dsn)
         cur = conn.cursor()
         cur.execute('SELECT system as "System", COUNT(system) as "Rescues" FROM "Rescues" WHERE '
                     '"deletedAt" IS NULL and position(\': false\' in "data"::json#>>\'{markedForDeletion}\')>0 '

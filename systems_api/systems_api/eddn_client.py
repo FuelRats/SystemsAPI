@@ -11,7 +11,41 @@ import asyncio
 from datetime import datetime
 import requests
 
-from xmlrpc.client import ServerProxy, ProtocolError
+import base64
+
+
+# Anope 2.1 replaced XML-RPC with JSON-RPC. This shim keeps the existing
+# proxy.command(service, source, cmd) call sites working by issuing a BotServ
+# command over JSON-RPC. Endpoint + token come from config (rpc_proxy /
+# rpc_token); every error is swallowed so a failed status report can never
+# crash the ingester.
+ProtocolError = requests.RequestException
+
+
+class AnopeProxy:
+    def __init__(self, url, token):
+        self.url = url
+        self.token = token
+
+    def command(self, service, source, cmd):
+        try:
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + base64.b64encode(self.token.encode()).decode(),
+            }
+            payload = {
+                'jsonrpc': '2.0',
+                'method': 'anope.command',
+                'params': [source, 'BotServ', cmd],
+                'id': 1,
+            }
+            resp = requests.post(self.url, json=payload, headers=headers, timeout=10)
+            resp.raise_for_status()
+            result = resp.json()
+            if result.get('error'):
+                print(f"Anope JSON-RPC error (non-fatal): {result['error']}")
+        except Exception as e:
+            print(f"Anope JSON-RPC command failed (non-fatal): {e}")
 
 from pyramid.paster import (
     get_appsettings,
@@ -191,9 +225,9 @@ def main(argv=None):
     engine = get_engine(settings)
     session_factory = get_session_factory(engine)
     session = get_tm_session(session_factory, transaction.manager)
-    if 'xml_proxy' in settings:
-        serverurl = settings['xml_proxy']
-        proxy = ServerProxy(serverurl)
+    if 'rpc_proxy' in settings:
+        serverurl = settings['rpc_proxy']
+        proxy = AnopeProxy(serverurl, settings.get('rpc_token', ''))
 
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)

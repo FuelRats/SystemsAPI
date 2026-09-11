@@ -18,8 +18,13 @@ sqlalchemy.url = sqlite:///%(here)s/systems_api.sqlite
 # Set this to the host from which you will be downloading galaxy files. Default backend is Spansh.
 stardb_host = https://downloads.spansh.co.uk/
 
-# Set this to your Anope XMLRPC host (if you want stat reports)
-xml_proxy = http://127.0.0.1:8660/
+# Optional IRC stat reports via Anope 2.1 JSON-RPC (BotServ SAY). Set the
+# endpoint and a bearer token; omit to disable reporting.
+rpc_proxy = http://127.0.0.1:6080/jsonrpc
+rpc_token = CHANGEME
+
+# psycopg2 DSN for the rescue database (used by the heatmap endpoint).
+rescue_db_dsn = host=127.0.0.1 dbname=fuelratsapi user=fuelrats
 
 retry.attempts = 3
 
