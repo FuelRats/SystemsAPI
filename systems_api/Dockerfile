@@ -13,7 +13,7 @@ RUN PIP_CONSTRAINT=/app/requirements.txt PIP_BUILD_CONSTRAINT=/app/requirements.
 COPY . .
 RUN PIP_CONSTRAINT=/app/requirements.txt PIP_BUILD_CONSTRAINT=/app/requirements.txt pip install --no-cache-dir --no-deps . \
  && pip check \
- && python -c "import systems_api, systems_api.eddn_client, waitress, zmq, psycopg2" \
+ && python -P -c "import systems_api, systems_api.eddn_client, waitress, zmq, psycopg2" \
  && rm -rf /app
 WORKDIR /data
 USER 1000:1000

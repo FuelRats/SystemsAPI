@@ -20,10 +20,11 @@ BASE_URL=${1%/}
 
 BODY=$(mktemp) || exit 1
 trap 'rm -f "$BODY"' EXIT
+trap 'exit 1' HUP INT TERM
 
 # fetch PATH: GET BASE_URL/PATH into $BODY and set $CODE to the HTTP status (000 on a curl error).
 fetch() {
-    CODE=$(curl -s -o "$BODY" -w '%{http_code}' --max-time "$MAX_TIME" "$BASE_URL$1") || CODE=000
+    CODE=$(curl -sS -o "$BODY" -w '%{http_code}' --max-time "$MAX_TIME" "$BASE_URL$1") || CODE=000
 }
 
 ok() {
