@@ -1,0 +1,42 @@
+# Deployed as /home/fuelrats/systemsapi/compose.yml (project "systemsapi"); see deploy/README.md.
+# .env holds only SAPI_TAG. data/ (uid 1000, mode 750) holds run.ini and eddn.ini (0600) and heatmap.json.
+name: systemsapi
+x-common: &common
+  image: fr-sapi:${SAPI_TAG:?set SAPI_TAG in .env}
+  pull_policy: never
+  # Host network: galmap PostgreSQL trusts 127.0.0.1 only, Anope JSON-RPC is on 127.0.0.1:6080,
+  # and nginx proxies to 127.0.0.1:6543.
+  network_mode: host
+  # Neither pserve nor the EDDN client handles SIGTERM, and as PID 1 they would ignore it.
+  init: true
+  user: "1000:1000"
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  volumes:
+    - /etc/localtime:/etc/localtime:ro
+    # Nothing writes at run time: heatmap.json is only read while it exists.
+    - ./data:/data:ro
+  stop_grace_period: 10s
+  restart: unless-stopped
+services:
+  fr-sapi:
+    <<: *common
+    container_name: fr-sapi
+    # waitress buffers responses over 1 MiB (e.g. /heatmap) in /tmp.
+    tmpfs:
+      - /tmp:size=512m
+    # A runaway query OOM-kills this container only and never swaps on the DB host.
+    mem_limit: 16g
+    memswap_limit: 16g
+  fr-sapi-eddn:
+    <<: *common
+    container_name: fr-sapi-eddn
+    tmpfs:
+      - /tmp:size=16m
+    # stdout is one carriage-return status line per EDDN message; warnings and tracebacks go to stderr.
+    command: ["sh", "-c", "exec python -m systems_api.eddn_client /data/eddn.ini >/dev/null"]
+    mem_limit: 2g
+    memswap_limit: 2g
