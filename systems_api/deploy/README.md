@@ -28,8 +28,15 @@ git -C src fetch && git -C src checkout --detach <sha> && chmod -R o+rX src && c
 
 ## Release and rollback
 
-Release, in `/home/fuelrats/systemsapi`. First compare the deployed `compose.yml` with the one
-at the release SHA:
+Release, in `/home/fuelrats/systemsapi`. First check `src` out at the release SHA, so the compose
+steps below read that SHA's file, also when the image already exists (for example a roll-forward
+after a rollback):
+
+```
+git -C src fetch && git -C src checkout --detach <sha>
+```
+
+Then compare the deployed `compose.yml` with the one at the release SHA:
 
 ```
 diff src/systems_api/deploy/compose.yml compose.yml
@@ -47,35 +54,54 @@ Then:
 sed -i "s/^SAPI_TAG=.*/SAPI_TAG=<sha7>/" .env && sudo docker compose up -d
 ```
 
-Rollback: the same commands with the previous tag, using the `compose.yml` that matches the
-rolled-back SHA (run `git -C src checkout --detach <previous sha>` before the diff and install).
-The weekly image prune deletes unused images older than 7 days, so rebuild the previous tag first
-if it is more than 6 days old.
+Rollback: the same commands with the previous SHA and tag, so the diff and install use the
+`compose.yml` that matches the rolled-back SHA. The weekly image prune deletes unused images older
+than 7 days, so rebuild the previous tag first if it is more than 6 days old.
 
-After every `sudo docker compose up -d` (release or rollback) and every
-`sudo docker compose restart`, once pserve is serving (a few seconds), in
-`/home/fuelrats/systemsapi`:
+Verify every `sudo docker compose up -d` (release or rollback) and every
+`sudo docker compose restart`. Before the command, in `/home/fuelrats/systemsapi`, record the time
+and the ingester's restart count (the before-readings):
 
 ```
+T=$(date +%s); sudo docker inspect -f '{{.RestartCount}}' fr-sapi-eddn
+```
+
+After it, in the same shell, wait until pserve answers the health marker (at most 40 tries,
+0.5 s apart; the loop only bounds the wait), then run the checks:
+
+```
+i=0; until curl -fsS --max-time 2 'http://127.0.0.1:6543/mecha?name=Sol&fast=1' | grep -q '"Perfect match"'; do i=$((i+1)); [ "$i" -ge 40 ] && break; sleep 0.5; done
 sh src/systems_api/deploy/smoke.sh http://127.0.0.1:6543
 sudo docker inspect -f '{{.RestartCount}}' fr-sapi-eddn
-sudo docker compose logs --since 2m fr-sapi-eddn
+sudo docker compose logs --since "$T" fr-sapi-eddn
 ```
 
-`smoke.sh` must print only `ok` lines, the restart count must stay 0, and the ingester log must
-have no `Traceback`.
+`smoke.sh` must exit 0 after 8 `ok` lines, the last one `ok /`; a run cut short prints no `FAIL`
+line, so check the exit code. The restart count must not grow: after `up -d` recreated
+`fr-sapi-eddn` or after `restart fr-sapi-eddn` (both reset it) it must be 0; after an action that
+left `fr-sapi-eddn` running (`restart fr-sapi`, or `up -d` that did not recreate it) it must equal
+the value recorded before. The ingester log must have no `Traceback`.
+
+After a release, a rollback or a `restart fr-sapi-eddn`, the ingester first touches galmap at its
+first accepted EDDN message. Wait until `lastupdate` from `/api/stats` (see Logs) is greater than
+`$T`, then repeat the restart-count and `Traceback` checks above:
+
+```
+curl -s --max-time 5 http://127.0.0.1:6543/api/stats
+```
 
 ## Config
 
-The inis live in `data/`. After editing one, run `sudo docker compose restart <svc>`
-(`fr-sapi` or `fr-sapi-eddn`), then verify as under Release and rollback. `data/` is a
-directory bind mount, so an editor that replaces the file (new inode) is picked up on restart.
+The inis live in `data/`. After editing one, take the before-readings under Release and
+rollback, run `sudo docker compose restart <svc>` (`fr-sapi` or `fr-sapi-eddn`), then verify as
+described there. `data/` is a directory bind mount, so an editor that replaces the file (new
+inode) is picked up on restart.
 
-Never set `pyramid.includes = pyramid_debugtoolbar` in `data/*.ini`. The image keeps the package
-installed (`setup.py` requires it), and behind nginx every request arrives from 127.0.0.1, which
-the toolbar trusts, so one include line exposes its settings panel (the DB URL and `rpc_token`)
-publicly. The `/_debug_toolbar/` 404 check in `smoke.sh` is meaningful over loopback or through
-nginx.
+Never list `pyramid_debugtoolbar` under `pyramid.includes` in `data/*.ini`, on the key line or on
+a continuation line. The image keeps the package installed (`setup.py` requires it), and behind
+nginx every request arrives from 127.0.0.1, which the toolbar trusts, so including it exposes its
+settings panel (the DB URL and `rpc_token`) publicly. The `/_debug_toolbar/` 404 check in
+`smoke.sh` is meaningful over loopback or through nginx.
 
 ## Logs
 
@@ -83,7 +109,9 @@ nginx.
 discarded, as under systemd (`StandardOutput=null`): that is the status line per message and also
 its handled-error prints (Anope JSON-RPC failures, ZMQ reconnects, rejected payloads). Python
 warnings and uncaught tracebacks go to stderr and show here. For ingest liveness, read
-`lastupdate` from `/api/stats`.
+`lastupdate` from `/api/stats` (the record's `id`, in Unix seconds). The ingester writes it at its
+first accepted EDDN message after a start, then about hourly, so a value older than about 2 h
+means a stalled ingester.
 
 ## Heatmap
 
@@ -92,19 +120,24 @@ mtime is more than 1 day ahead; on the read-only mount every such `/heatmap` req
 rescue-DB aggregation plus one galmap query per system, the write fails, and the answer is
 `null`.
 
-To refresh it, run `generate_heatmap` in the native checkout with its venv, then copy the file in
-with a rename, so no request reads a partial file:
+To refresh it, run `generate_heatmap` with the native venv in
+`/home/fuelrats/SystemsAPI/systems_api`; it writes `heatmap.json` to its working directory. Copy
+the file only after the run printed `New heatmap generated.`: on an error it prints a message
+(usually `Oops! ...`) and still exits 0. Copy it in with a rename, so no request reads a partial
+file:
 
 ```
-cp -a <src> data/.heatmap.json.new && mv -f data/.heatmap.json.new data/heatmap.json
+cp -a /home/fuelrats/SystemsAPI/systems_api/heatmap.json /home/fuelrats/systemsapi/data/.heatmap.json.new && mv -f /home/fuelrats/systemsapi/data/.heatmap.json.new /home/fuelrats/systemsapi/data/heatmap.json
 ```
 
-Never give it a future mtime.
+Never give it a future mtime. Then verify with `smoke.sh` as under Release and rollback (nothing
+restarts, so the restart-count and log checks do not apply).
 
 ## Listen address
 
-If a direct caller needs :6543 beyond loopback, set `listen = *:6543` in `data/run.ini` and run
-`sudo docker compose restart fr-sapi`, then verify as under Release and rollback.
+If a direct caller needs :6543 beyond loopback, set `listen = *:6543` in `data/run.ini`, take the
+before-readings under Release and rollback, run `sudo docker compose restart fr-sapi`, then verify
+as described there.
 
 ## Never run a second ingester
 
