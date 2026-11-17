@@ -9,3 +9,7 @@ updates:
       security:
         applies-to: security-updates
         patterns: ["*"]
+    ignore:
+      # pyramid 2.1 and deform need pkg_resources from setuptools<81 (see systems_api/Dockerfile).
+      - dependency-name: setuptools
+        versions: [">=81"]
